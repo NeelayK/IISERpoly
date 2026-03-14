@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://0cqn7ifk1krc"]
+
+[resource]
+roughness = 0.77
+ao_enabled = true
+stencil_flags = 2

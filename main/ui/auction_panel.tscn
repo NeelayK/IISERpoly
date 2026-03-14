@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://dfgdebdcat2yf"]
+
+[node name="AuctionPanel" type="Panel" unique_id=269787548]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -59.0
+offset_right = -909.0
+offset_bottom = -343.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=741534773]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 7
+alignment = 1
+
+[node name="BiddingPlayerLabel" type="Label" parent="VBoxContainer" unique_id=1168176517]
+layout_mode = 2
+
+[node name="PropertyName" type="Label" parent="VBoxContainer" unique_id=618744977]
+layout_mode = 2
+
+[node name="CurrentBid" type="Label" parent="VBoxContainer" unique_id=128651084]
+layout_mode = 2
+
+[node name="HighestBidder" type="Label" parent="VBoxContainer" unique_id=1174089425]
+layout_mode = 2
+
+[node name="BidSlider" type="HSlider" parent="VBoxContainer" unique_id=854805724]
+layout_mode = 2
+min_value = 1.0
+value = 1.0
+
+[node name="BidValueLabel" type="Label" parent="VBoxContainer" unique_id=720728792]
+layout_mode = 2
+
+[node name="QuickMoney" type="HBoxContainer" parent="VBoxContainer" unique_id=1315947541]
+layout_mode = 2
+alignment = 1
+
+[node name="+50" type="Button" parent="VBoxContainer/QuickMoney" unique_id=1788068394]
+custom_minimum_size = Vector2(90, 40)
+layout_mode = 2
+size_flags_vertical = 4
+text = "+50"
+
+[node name="+100" type="Button" parent="VBoxContainer/QuickMoney" unique_id=1443869882]
+custom_minimum_size = Vector2(90, 40)
+layout_mode = 2
+size_flags_vertical = 4
+text = "+100"
+
+[node name="+500" type="Button" parent="VBoxContainer/QuickMoney" unique_id=1353513711]
+custom_minimum_size = Vector2(90, 40)
+layout_mode = 2
+text = "+500"
+
+[node name="AuctionButtons" type="HBoxContainer" parent="VBoxContainer" unique_id=278511480]
+layout_mode = 2
+alignment = 1
+
+[node name="BidButton" type="Button" parent="VBoxContainer/AuctionButtons" unique_id=1482775363]
+custom_minimum_size = Vector2(120, 60)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Bid"
+
+[node name="FoldButton" type="Button" parent="VBoxContainer/AuctionButtons" unique_id=845324866]
+custom_minimum_size = Vector2(120, 60)
+layout_mode = 2
+text = "Fold"

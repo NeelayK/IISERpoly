@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://bvppo81bfjnr3"]
+
+[ext_resource type="Script" uid="uid://dyqvlwmtcarfk" path="res://main/board_items/player.gd" id="1_1e681"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1e681"]
+diffuse_mode = 1
+albedo_color = Color(0.67873114, 0.6426641, 0.63926315, 1)
+metallic = 1.0
+roughness = 0.45
+
+[node name="Player" type="Node3D" unique_id=75860781]
+script = ExtResource("1_1e681")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1526212578]
+material_override = SubResource("StandardMaterial3D_1e681")

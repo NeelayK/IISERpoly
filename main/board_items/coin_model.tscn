@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dmcwbpel3tmxu"]
+
+[ext_resource type="ArrayMesh" uid="uid://c3n1rohk0b5j4" path="res://assets/funds/coin.obj" id="1_xij7u"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_xij7u"]
+height = 0.055
+radius = 0.2
+
+[node name="CoinModel" type="RigidBody3D" unique_id=216991414]
+transform = Transform3D(1, 0, 0, 0, -1, 1.509958e-07, 0, -1.509958e-07, -1, 0, 0, 0)
+continuous_cd = true
+linear_damp = 2.0
+angular_damp = 5.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1151911686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, 0)
+shape = SubResource("CylinderShape3D_xij7u")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=565175139]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+mesh = ExtResource("1_xij7u")

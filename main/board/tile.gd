@@ -1,0 +1,167 @@
+extends Node3D
+
+# --- Signals ---
+signal tile_clicked(tile)
+
+# --- Constants & Config ---
+const DEFAULT_MATERIAL = preload("res://materials/Tile/Tile.tres")
+const INK_COLOR = Color("#2e2a28")
+const FONT_SIZE_MULTIPLIER = 1.5
+const LABEL_HEIGHT := 0.105
+const TILE_SIZE := Vector3(1.25, 0.2, 2.0)
+const CORNER_SIZE := Vector3(2.0, 0.2, 2.0)
+
+# --- Node References ---
+@onready var base := $Base
+@onready var property_strip := $PropertyStrip
+@onready var selection_shape := $Selection/Shape
+@onready var collision_shape := $Collision/Shape
+@onready var building_container := $BuildingContainer
+
+# --- Data & State ---
+var tile_type : BoardData.TileType
+@export var coin_model : PackedScene 
+
+var tile_data : Dictionary
+var tile_owner = null
+var funding := 0
+var is_mortgaged := false
+
+# ------------------------------------------------------------------------------
+# INITIALIZATION & MESH GENERATION
+# ------------------------------------------------------------------------------
+
+func _ready():
+	update_tile_shape()
+	create_tile_labels()
+
+func update_tile_shape():
+	var is_corner = (tile_type == BoardData.TileType.CORNER)
+	var target_size = CORNER_SIZE if is_corner else TILE_SIZE
+
+	if base.mesh == null: base.mesh = BoxMesh.new()
+	base.mesh.size = target_size
+	
+	if collision_shape.shape == null: collision_shape.shape = BoxShape3D.new()
+	collision_shape.shape.size = Vector3(target_size.x, 0.2, target_size.z)/1.01
+	collision_shape.position.y = 0
+	
+	if selection_shape.shape == null: selection_shape.shape = BoxShape3D.new()
+	selection_shape.shape.size = target_size
+
+	var mat = DEFAULT_MATERIAL.duplicate() as StandardMaterial3D
+	mat.albedo_color = BoardData.COLOR_DEFAULT
+	base.material_override = mat
+
+	# 5. Property Strip
+	if tile_type == BoardData.TileType.PROPERTY:
+		property_strip.visible = true
+		if property_strip.mesh == null: property_strip.mesh = BoxMesh.new()
+		property_strip.mesh.size = Vector3(1.25, 0.001, 0.5)
+		property_strip.position = Vector3(0, 0.101, -0.75)
+		
+		var strip_mat = StandardMaterial3D.new()
+		var color_key = tile_data.get("color", "")
+		strip_mat.albedo_color = BoardData.PROPERTY_COLORS.get(color_key, BoardData.COLOR_DEFAULT)
+		property_strip.material_override = strip_mat
+	else:
+		property_strip.visible = false
+
+# ------------------------------------------------------------------------------
+# VISUALS: LABELS & ICONS
+# ------------------------------------------------------------------------------
+
+func create_tile_labels():
+	var tile_name = tile_data.get("name", "Unknown")
+	var price_text = "$" + str(tile_data.get("price", 0))
+	var icon_path = tile_data.get("icon", BoardData.ICON_DEFAULT)
+
+	match tile_type:
+		BoardData.TileType.PROPERTY:
+			create_text_label(tile_name, Vector3(0, LABEL_HEIGHT, -0.2), 0.5, 0, 250.0)
+			create_text_label(price_text, Vector3(0, LABEL_HEIGHT, 0.8), 0.7, 0)
+		BoardData.TileType.CHANCE, BoardData.TileType.PROJECT_FUNDS:
+			create_text_label(tile_name, Vector3(0, LABEL_HEIGHT, -0.6), 0.55, 0, 400.0)
+			create_icon(icon_path, Vector3(0, LABEL_HEIGHT, 0.2))
+		BoardData.TileType.CAFE, BoardData.TileType.UTILITY, BoardData.TileType.FEES:
+			create_text_label(tile_name, Vector3(0, LABEL_HEIGHT, -0.6), 0.5, 0, 400.0)
+			create_icon(icon_path, Vector3(0, LABEL_HEIGHT, 0.1))
+			create_text_label(price_text, Vector3(0, LABEL_HEIGHT, 0.8), 0.6, 0)
+		BoardData.TileType.CORNER:
+			create_text_label(tile_name, Vector3(-0.4, LABEL_HEIGHT, -0.4), 0.8, 45, 500.0)
+			create_icon(icon_path, Vector3(0.1, LABEL_HEIGHT, 0.1), 45)
+
+func create_text_label(text:String, pos:Vector3, scale_val:float, rot:int = 0, wrap_width:float = 300.0):
+	var label = Label3D.new()
+	label.text = text
+	label.position = pos
+	label.rotation_degrees = Vector3(-90, 0, rot)
+	var final_scale = scale_val * FONT_SIZE_MULTIPLIER
+	label.scale = Vector3(final_scale, final_scale, final_scale)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.width = wrap_width
+	label.modulate = INK_COLOR
+	label.outline_modulate = Color(0,0,0,0)
+	add_child(label)
+
+func create_icon(path:String, pos:Vector3, rot:int = 0):
+	var sprite = Sprite3D.new()
+	sprite.texture = load(path) if ResourceLoader.exists(path) else load(BoardData.ICON_DEFAULT)
+	sprite.position = pos
+	sprite.rotation_degrees = Vector3(-90, 0, rot)
+	sprite.pixel_size = 0.0015
+	sprite.modulate = INK_COLOR
+	add_child(sprite)
+
+# ------------------------------------------------------------------------------
+# BUILDING SYSTEM (COIN STACKING)
+# ------------------------------------------------------------------------------
+
+func refresh_buildings():
+	for child in building_container.get_children():
+		child.queue_free()
+	
+	if tile_type != BoardData.TileType.PROPERTY:
+		return 
+	for i in range(funding):
+		spawn_coin(i, (i == 4))
+		
+func spawn_coin(index: int, is_investment: bool):
+	var coin = coin_model.instantiate()
+	building_container.add_child(coin)
+	
+	if coin is RigidBody3D:
+		coin.linear_velocity = Vector3.ZERO
+		coin.angular_velocity = Vector3.ZERO
+	
+	var spawn_y = 1.0 + (index * 0.2)
+	var random_offset = Vector3(randf_range(-0.1, 0.1), 0, randf_range(-0.1, 0.1))
+	
+	coin.global_position = property_strip.global_position + Vector3(0, spawn_y, 0) + random_offset
+	coin.scale = Vector3(1,1,1) if is_investment else Vector3(0.8, 0.8, 0.8)
+
+func _get_ownership_count() -> int:
+	if tile_owner == null: return 0
+	var count = 0
+	for t in get_parent().get_children(): 
+		if t.tile_type == tile_type and t.tile_owner == tile_owner:
+			count += 1
+	return count
+
+func get_stack_height() -> float:
+	return building_container.get_child_count() * 0.1 # Approximate height for player figurine
+
+# ------------------------------------------------------------------------------
+# INTERACTION & HIGHLIGHTS
+# ------------------------------------------------------------------------------
+
+func set_highlight(active: bool, glow_color := Color.WHITE):
+	var mat = base.material_override as StandardMaterial3D
+	if not mat: return
+	mat.emission_enabled = active
+	mat.emission = glow_color
+	mat.emission_energy_multiplier = 1.5 if active else 0.0
+
+func _on_area_3d_input_event(_camera, event, _position, _normal, _shape_idx):
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		tile_clicked.emit(self)
