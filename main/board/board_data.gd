@@ -1,3 +1,10 @@
+
+# Board Data
+# Does not Contain Functions
+
+
+#region Constants
+
 extends Node
 
 enum TileType {
@@ -31,7 +38,7 @@ const PROPERTY_COLORS = {
 	"Dark Blue": COLOR_DARK_BLUE
 }
 
-# --- ICON PATH CONSTANTS ---
+#ICON PATH CONSTANTS
 const ICON_DEFAULT = "res://assets/tiles/CHA.png"
 const ICON_CHANCE = "res://assets/tiles/CHA.png"
 const ICON_CHEST = "res://assets/tiles/FUN.png"
@@ -44,6 +51,9 @@ const ICON_HUMANITIES = "res://assets/tiles/HUM.png"
 const ICON_LIBRARY = "res://assets/tiles/LIB.png"
 const ICON_GO_TO = "res://assets/tiles/GTH.png"
 
+#endregion
+
+#data for tiles: includes name,type,icon,price,color,rent,mortgage,
 const TILES : Array[Dictionary] = [
 
 	# --- SIDE 1 ---
@@ -218,7 +228,7 @@ const TILES : Array[Dictionary] = [
 	"rent":[50,200,600,1400,1700,2000],
 	"mortgage":200}
 ]
-
+#House (funds cost)
 const property_rules := {
 
 	"Brown": {"investment": 50},
@@ -231,14 +241,14 @@ const property_rules := {
 	"Dark Blue": {"investment": 200}
 }
 
-
+#Cafe charge
 var cafe_charge = {
 	1: 25,
 	2: 50,
 	3: 100,
 	4: 200
 }
-
+#utility multipler
 var utility_rules = {
 	one_owned_multiplier = 4,
 	two_owned_multiplier = 10

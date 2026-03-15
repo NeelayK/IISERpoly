@@ -11,12 +11,12 @@ var auction_property = null
 var participants = []
 var current_bid = 0
 var highest_bidder = null
-var turn_index = 0
+var turn_index = 0 # index of players in auction
 
-func setup(main_ui: CanvasLayer): #Setup called in GC (parent)
+func setup(main_ui: CanvasLayer): #Setup funtion called in GC (parent)
 	ui = main_ui
 
-func start_auction(property, all_players: Array): #Setup for 
+func start_auction(property, all_players: Array): #Initial State for Auction
 	auction_property = property
 	participants = all_players.duplicate()
 	current_bid = 0
@@ -24,7 +24,7 @@ func start_auction(property, all_players: Array): #Setup for
 	turn_index = 0
 	_process_turn()
 
-func _process_turn():
+func _process_turn(): #Continuous State Check for Auction
 	if participants.size() == 1 and highest_bidder != null:
 		_end_auction(participants[0])
 		return
@@ -45,7 +45,7 @@ func _process_turn():
 
 	ui.show_auction_panel(bidding_player, auction_property, current_bid, highest_bidder, place_bid, fold_auction)
 
-func place_bid(amount: int):
+func place_bid(amount: int): #Place Bid
 	var bidding_player = participants[turn_index]
 	if amount <= current_bid or amount > bidding_player.money: return
 
@@ -54,12 +54,12 @@ func place_bid(amount: int):
 	turn_index += 1
 	_process_turn()
 
-func fold_auction():
+func fold_auction(): #Remove Player
 	participants.remove_at(turn_index)
 	if turn_index >= participants.size():
 		turn_index = 0
 	_process_turn()
 
-func _end_auction(winner):
+func _end_auction(winner): #Function to emit winner [auction_finished(winner,property, bid_value)]
 	ui.hide_auction_panel()
 	auction_finished.emit(winner, auction_property, current_bid)

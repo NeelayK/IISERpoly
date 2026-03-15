@@ -1,13 +1,14 @@
-extends Node3D
+#board creation setup
 
+extends Node3D
 @export var tile_scene : PackedScene
 const TILE_WIDTH = 1.25
 const CORNER_SIZE = 2.0
 
-func _ready():
+func _ready(): # calls create_board
 	create_board()
 
-func create_board():
+func create_board(): #creates tiles
 	for i in range(BoardData.TILES.size()):
 		var tile_info = BoardData.TILES[i]
 		var tile = tile_scene.instantiate()
@@ -19,7 +20,7 @@ func create_board():
 		tile.rotation_degrees = transform_data.rotation
 		$Tiles.add_child(tile)
 
-func calculate_tile_transform(index):
+func calculate_tile_transform(index): #helper function for position and rotation
 	var side = index / 10
 	var offset = index % 10
 	

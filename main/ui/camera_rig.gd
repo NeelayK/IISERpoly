@@ -95,10 +95,8 @@ func _process_player_tracking(delta):
 
 func _process_tabletop_panning(delta):
 	yaw_current = lerp_angle(yaw_current, yaw_target, 6.0 * delta)
-	
 	var rotated_offset = pan_offset.rotated(Vector3.UP, yaw_current)
 	var target_pos = pan_target + rotated_offset
-	
 	global_position = global_position.lerp(target_pos, 8.0 * delta)
 	
 	var target_transform = global_transform.looking_at(pan_target, Vector3.UP)
