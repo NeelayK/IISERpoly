@@ -13,7 +13,7 @@ var jail_turns := 0
 var jail_free_cards := 0
 var is_bankrupt := false
 var player_name = ""
-var money := 1500
+var money := 10
 var next_rent_free : bool = false
 var properties = []
 
@@ -33,11 +33,11 @@ func move_steps(steps: int, board_tiles: Array):
 		# Move the index. Adding tile_count ensures the result is positive before modulo
 		current_tile = (current_tile + direction + tile_count) % tile_count
 		
-		# Only collect GO money if moving forward and passing index 0
 		if direction == 1:
 			if current_tile < prev_tile and not is_in_jail:
 				money += 200
 				passed_go.emit()
+				
 				print(player_name, " passed GO! Collected $200 stipend.")
 		
 		# Movement logic remains the same

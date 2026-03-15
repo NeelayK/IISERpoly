@@ -6,10 +6,10 @@ extends Node3D
 @export var board_state : Node
 @export var ui : CanvasLayer
 @export var camera_rig : Node3D
-
 @onready var auction_manager = $AuctionManager
 @onready var property_manager = $PropertyManager
 @onready var card_manager = $CardManager
+
 # --- Constants ---
 const PLAYER_COUNT := 2   
 const JAIL_INDEX := 10
@@ -77,6 +77,7 @@ func spawn_players():
 		p.get_child(0).scale = Vector3(0.3, 0.3, 0.3)
 		p.player_name = data["name"]
 		p.global_position = tiles[0].global_position + Vector3(i * 0.6, 0.1, 0)
+		p.connect("passed_go",ui.update_ui)
 		players.append(p)
 
 # ==========================================

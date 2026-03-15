@@ -1,3 +1,6 @@
+#AuctionManager
+#Handles Auction Functionality.
+
 extends Node
 class_name AuctionManager
 
@@ -10,10 +13,10 @@ var current_bid = 0
 var highest_bidder = null
 var turn_index = 0
 
-func setup(main_ui: CanvasLayer):
+func setup(main_ui: CanvasLayer): #Setup called in GC (parent)
 	ui = main_ui
 
-func start_auction(property, all_players: Array):
+func start_auction(property, all_players: Array): #Setup for 
 	auction_property = property
 	participants = all_players.duplicate()
 	current_bid = 0

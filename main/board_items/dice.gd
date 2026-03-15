@@ -16,6 +16,7 @@ var face_values = {
 	Vector3.FORWARD: 2, Vector3.BACK: 4
 }
 
+
 func roll(start_pos: Vector3, final_target_pos: Vector3):
 	target_pos = final_target_pos
 	teleport_pos = start_pos

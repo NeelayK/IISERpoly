@@ -234,6 +234,56 @@ offset_right = -50.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="TradePanel" type="Panel" parent="UI" unique_id=1726829413]
+visible = false
+custom_minimum_size = Vector2(400, 300)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -261.0
+offset_right = 200.0
+offset_bottom = -61.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/TradePanel" unique_id=1738274468]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer" unique_id=2004868437]
+layout_mode = 2
+text = "Trade Offer"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/TradePanel/VBoxContainer" unique_id=250908224]
+layout_mode = 2
+alignment = 1
+
+[node name="P1" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/HBoxContainer" unique_id=327417729]
+layout_mode = 2
+
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/HBoxContainer/P1" unique_id=2093945127]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "You Get"
+horizontal_alignment = 1
+
+[node name="P2" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/HBoxContainer" unique_id=694520681]
+layout_mode = 2
+
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/HBoxContainer/P2" unique_id=829191792]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "You Get"
+horizontal_alignment = 1
+
 [node name="CameraRIG" type="Node3D" parent="." unique_id=429319313]
 script = ExtResource("15_sveyw")
 
