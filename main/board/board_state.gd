@@ -8,7 +8,6 @@ func _ready(): #gets tiles node children
 
 func get_tiles(): # returns tiles array
 	return tiles
-	
 
 #calculates rent for property with fund + investment, double rent for set rule, cafe and utilities
 func calculate_rent(tile): #

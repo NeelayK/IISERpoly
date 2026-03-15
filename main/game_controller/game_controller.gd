@@ -253,10 +253,11 @@ func _buy_property():
 	ui.show_property_details(tile)
 	show_default_actions()
 
-func show_default_actions():
+func show_default_actions(camera_pan:bool= true):
 	game_state = GameState.TURN_ACTIONS
-	var current_pos = players[current_player].global_position
-	#camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
+	if camera_pan:
+		var current_pos = players[current_player].global_position
+		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
 	ui.show_turn_actions({
 		"build": setup_tile_selection.bind("build", Color.GREEN),
 		"sell": setup_tile_selection.bind("sell", Color.RED),
