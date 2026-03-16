@@ -44,14 +44,20 @@ layout_mode = 2
 layout_mode = 2
 alignment = 1
 
+[node name="+10" type="Button" parent="VBoxContainer/QuickMoney" unique_id=718545129]
+custom_minimum_size = Vector2(50, 40)
+layout_mode = 2
+size_flags_vertical = 4
+text = "+10"
+
 [node name="+50" type="Button" parent="VBoxContainer/QuickMoney" unique_id=1788068394]
-custom_minimum_size = Vector2(90, 40)
+custom_minimum_size = Vector2(60, 40)
 layout_mode = 2
 size_flags_vertical = 4
 text = "+50"
 
 [node name="+100" type="Button" parent="VBoxContainer/QuickMoney" unique_id=1443869882]
-custom_minimum_size = Vector2(90, 40)
+custom_minimum_size = Vector2(75, 40)
 layout_mode = 2
 size_flags_vertical = 4
 text = "+100"

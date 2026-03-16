@@ -37,7 +37,7 @@ func _process_turn(): #Continuous State Check for Auction
 		turn_index = 0
 
 	var bidding_player = participants[turn_index]
-	var minimum_bid = current_bid + 50
+	var minimum_bid = current_bid + 10
 
 	if bidding_player.money < minimum_bid:
 		fold_auction()

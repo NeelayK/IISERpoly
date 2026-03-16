@@ -27,7 +27,7 @@ func _ready():
 	update_tile_shape()
 	create_tile_labels()
 
-# resizes tile shape and adds property strip
+# resizes tile shape and adds property strip, collision
 func update_tile_shape():
 	var is_corner = (tile_type == BoardData.TileType.CORNER)
 	var target_size = CORNER_SIZE if is_corner else TILE_SIZE
@@ -59,10 +59,7 @@ func update_tile_shape():
 	else:
 		property_strip.visible = false
 
-# ------------------------------------------------------------------------------
-# VISUALS: LABELS & ICONS
-# ------------------------------------------------------------------------------
-
+# creates labels, text for each tile.
 func create_tile_labels():
 	var tile_name = tile_data.get("name", "Unknown")
 	var price_text = "$" + str(tile_data.get("price", 0))
@@ -83,6 +80,7 @@ func create_tile_labels():
 			create_text_label(tile_name, Vector3(-0.4, LABEL_HEIGHT, -0.4), 0.8, 45, 500.0)
 			create_icon(icon_path, Vector3(0.1, LABEL_HEIGHT, 0.1), 45)
 
+#helpers
 func create_text_label(text:String, pos:Vector3, scale_val:float, rot:int = 0, wrap_width:float = 300.0):
 	var label = Label3D.new()
 	label.text = text
@@ -95,7 +93,6 @@ func create_text_label(text:String, pos:Vector3, scale_val:float, rot:int = 0, w
 	label.modulate = INK_COLOR
 	label.outline_modulate = Color(0,0,0,0)
 	add_child(label)
-
 func create_icon(path:String, pos:Vector3, rot:int = 0):
 	var sprite = Sprite3D.new()
 	sprite.texture = load(path) if ResourceLoader.exists(path) else load(BoardData.ICON_DEFAULT)
@@ -105,10 +102,7 @@ func create_icon(path:String, pos:Vector3, rot:int = 0):
 	sprite.modulate = INK_COLOR
 	add_child(sprite)
 
-# ------------------------------------------------------------------------------
-# BUILDING SYSTEM (COIN STACKING)
-# ------------------------------------------------------------------------------
-
+#refresh funding coins
 func refresh_buildings():
 	for child in building_container.get_children():
 		child.queue_free()
@@ -117,36 +111,20 @@ func refresh_buildings():
 		return 
 	for i in range(funding):
 		spawn_coin(i, (i == 4))
-		
+
+#spawns coin and changes size if  5th level
 func spawn_coin(index: int, is_investment: bool):
 	var coin = coin_model.instantiate()
 	building_container.add_child(coin)
-	
 	if coin is RigidBody3D:
 		coin.linear_velocity = Vector3.ZERO
 		coin.angular_velocity = Vector3.ZERO
-	
 	var spawn_y = 1.0 + (index * 0.2)
 	var random_offset = Vector3(randf_range(-0.1, 0.1), 0, randf_range(-0.1, 0.1))
-	
 	coin.global_position = property_strip.global_position + Vector3(0, spawn_y, 0) + random_offset
 	coin.scale = Vector3(1,1,1) if is_investment else Vector3(0.8, 0.8, 0.8)
 
-func _get_ownership_count() -> int:
-	if tile_owner == null: return 0
-	var count = 0
-	for t in get_parent().get_children(): 
-		if t.tile_type == tile_type and t.tile_owner == tile_owner:
-			count += 1
-	return count
-
-func get_stack_height() -> float:
-	return building_container.get_child_count() * 0.1 # Approximate height for player figurine
-
-# ------------------------------------------------------------------------------
-# INTERACTION & HIGHLIGHTS
-# ------------------------------------------------------------------------------
-
+#highlights tile
 func set_highlight(active: bool, glow_color := Color.WHITE):
 	var mat = base.material_override as StandardMaterial3D
 	if not mat: return
@@ -154,6 +132,7 @@ func set_highlight(active: bool, glow_color := Color.WHITE):
 	mat.emission = glow_color
 	mat.emission_energy_multiplier = 1.5 if active else 0.0
 
+#emits signal when clicked (tile_clicked)
 func _on_area_3d_input_event(_camera, event, _position, _normal, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		tile_clicked.emit(self)
