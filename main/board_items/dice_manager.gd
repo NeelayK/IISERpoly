@@ -32,4 +32,4 @@ func _on_die_finished(value):
 	results.append(value)
 	if results.size() == 2:
 		dice_result.emit(results[0], results[1])
-		#dice_result.emit(6,0)
+		#dice_result.emit(20,0)

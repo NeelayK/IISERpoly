@@ -249,7 +249,7 @@ func complete_action():
 	gc.show_default_actions()
 	gc.game_state = gc.GameState.TURN_ACTIONS
 
-
+#setup for swap state
 func _start_property_swap():
 	var player = gc.players[gc.current_player]
 	camera.enable_tabletop_pan(gc.players[gc.current_player].global_position)
@@ -278,6 +278,7 @@ func _start_property_swap():
 	gc.ui.show_instruction("Select 1 of your properties and 1 target property.")
 	_update_swap_highlights()
 
+#setup for steal state
 func _start_property_steal():
 	gc.game_state = gc.GameState.STEAL_PROPERTY
 	camera.enable_tabletop_pan(gc.players[gc.current_player].global_position)

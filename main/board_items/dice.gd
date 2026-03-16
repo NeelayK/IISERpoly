@@ -10,24 +10,24 @@ var stable_frames = 0
 var needs_teleport = false
 var teleport_pos = Vector3.ZERO
 
+#Face values
 var face_values = {
 	Vector3.UP: 6, Vector3.DOWN: 5,
 	Vector3.LEFT: 3, Vector3.RIGHT: 1,
 	Vector3.FORWARD: 2, Vector3.BACK: 4
 }
 
-
+#roll steup
 func roll(start_pos: Vector3, final_target_pos: Vector3):
 	target_pos = final_target_pos
 	teleport_pos = start_pos
-	
 	freeze = false
 	sleeping = false 
-
 	needs_teleport = true
 	rolling = true
 	stable_frames = 0
 
+#calls everytime whenever roll, applies forces, finalizes roll when stable
 func _integrate_forces(state):
 	if needs_teleport:
 		state.transform.origin = teleport_pos
@@ -55,24 +55,23 @@ func _integrate_forces(state):
 	else:
 		stable_frames = 0
 
+#called on idle time after stabilization and locks in location
 func finalize_roll():
 	if not rolling: return
 	rolling = false
 	freeze = true 
-	
 	var tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "global_position", target_pos, 0.3)
-	
 	var snapped_rot = Vector3(
 		round(rotation_degrees.x / 90.0) * 90.0,
 		round(rotation_degrees.y / 90.0) * 90.0,
 		round(rotation_degrees.z / 90.0) * 90.0
 	)
 	tween.tween_property(self, "rotation_degrees", snapped_rot, 0.3)
-	
 	await tween.finished
 	emit_signal("roll_finished", get_top_face())
 
+#helper to calculate top_face
 func get_top_face():
 	var best_dot = -1.0
 	var best_face = 1
