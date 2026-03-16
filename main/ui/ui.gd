@@ -59,7 +59,19 @@ func update_turn_display(text:String):
 #updates player huds money
 func update_ui():
 	for entry in panels:
-		entry.panel.get_node("Data/Money").text = "$" + str(entry.player.money)
+		var money_label = entry.panel.get_node("Data/Money")
+		var player = entry.player
+		
+		if player.is_bankrupt:
+			money_label.text = "BANKRUPT"
+			money_label.add_theme_color_override("font_color", Color.RED)
+			# Optional: Dim the whole panel
+			entry.panel.modulate = Color(0.39, 0.519, 0.61, 0.8) 
+		else:
+			money_label.text = "$" + str(player.money)
+			# Reset color if they aren't bankrupt (in case of game resets)
+			money_label.remove_theme_color_override("font_color")
+			entry.panel.modulate = Color.WHITE
 
 #removes buttons in action container
 func clear_buttons():
@@ -92,14 +104,15 @@ func show_property_buttons(buy_callback: Callable, auction_callback: Callable, c
 	create_button("auction", "Auction", "A", auction_callback)
 
 # create build,sell,mortgage,ungorgae,trade,end_turn buttons
-func show_turn_actions(callbacks: Dictionary):
+func show_turn_actions(callbacks: Dictionary, is_liquidation: bool = false):
 	clear_buttons()
 	create_button("build", "Invest Funds", "F", callbacks.build)
 	create_button("sell", "Take Back Funds", "S", callbacks.sell)
 	create_button("mortgage", "Mortgage", "M", callbacks.mortgage)
 	create_button("unmortgage", "Unmortgage", "U", callbacks.unmortgage)
 	create_button("trade", "Trade", "T", callbacks.trade)
-	create_button("end_turn", "End Turn", "Enter", callbacks.end_turn)
+	var end_label = "Give Up (Bankrupt)" if is_liquidation else "End Turn"
+	create_button("end_turn", end_label, "Enter", callbacks.end_turn)
 
 #create buttons when in jail
 func show_jail_buttons(pay_callback, card_callback, roll_callback, can_pay, has_card):

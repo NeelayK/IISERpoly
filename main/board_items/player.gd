@@ -12,7 +12,7 @@ var jail_turns := 0
 var jail_free_cards := 0
 var is_bankrupt := false
 var player_name = ""
-var money := 1500
+var money := 10
 var next_rent_free : bool = false
 var properties = []
 

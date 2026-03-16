@@ -11,7 +11,7 @@ extends Node3D
 @onready var card_manager = $CardManager
 
 #Constants
-const PLAYER_COUNT := 2   
+const PLAYER_COUNT := 3   
 const JAIL_INDEX := 10
 const JAIL_FINE := 50
 const MAX_JAIL_TURNS := 3
@@ -83,6 +83,9 @@ func spawn_players():
 func start_turn():
 	game_state = GameState.WAITING_ROLL
 	var player = players[current_player]
+	if player.is_bankrupt:
+		_end_turn()
+		return
 	ui.update_turn_display(String(player.player_name) + "'s Turn ")
 	if player.is_in_jail:
 		var can_pay = player.money >= JAIL_FINE
@@ -134,13 +137,19 @@ func _on_dice_result(die1, die2):
 #ends turn with jail check
 func _end_turn():
 	var player = players[current_player]
-	if rolled_doubles and not player.is_in_jail:
-		start_turn() 
-	else:
-		doubles_count = 0
-		rolled_doubles = false
-		current_player = (current_player + 1) % players.size()
+	if rolled_doubles and not player.is_bankrupt and not player.is_in_jail:
 		start_turn()
+		return
+	doubles_count = 0
+	rolled_doubles = false
+	current_player = (current_player + 1) % players.size()
+	var search_count = 0
+	while search_count < players.size():
+		if not players[current_player].is_bankrupt:
+			start_turn()
+			return
+		current_player = (current_player + 1) % players.size()
+		search_count += 1
 
 #--------------------------------------
 #JAIL
@@ -214,17 +223,17 @@ func resolve_tile(player):
 		elif tile.tile_owner != player:
 			if player.next_rent_free:
 				print(player.player_name, " uses their Rent Free pass!")
-				player.next_rent_free = false # Reset it so it only works once
+				player.next_rent_free = false
 				ui.update_ui()
-				show_default_actions()
-				return # Exit early, no money changes hands
+				check_liquidation(player)
+				return
 			var rent = board_state.calculate_rent(tile)
 			player.money -= rent
 			tile.tile_owner.money += rent
 			ui.update_ui()
 			check_liquidation(player)
 		else:
-			show_default_actions()
+			check_liquidation(player)
 			
 	elif tile.tile_type == BoardData.TileType.FEES:
 		player.money -= tile.tile_data.get("price", 100)
@@ -234,13 +243,11 @@ func resolve_tile(player):
 		
 	elif tile.tile_type == BoardData.TileType.CHANCE:
 		card_manager.handle_draw_card(player, true)
-		
-	# FIXED: This was checking for CHANCE twice in your original code
 	elif tile.tile_type == BoardData.TileType.PROJECT_FUNDS: 
 		card_manager.handle_draw_card(player, false)
 		
 	else:
-		show_default_actions()
+		check_liquidation(player)
 
 #buy property
 func _buy_property():
@@ -342,12 +349,16 @@ func _on_tile_clicked(tile):
 func check_liquidation(player):
 	if player.money < 0:
 		game_state = GameState.LIQUIDATION
+		var current_pos = players[current_player].global_position
+		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
 		ui.show_turn_actions({
-			"build": func(): pass, "sell": setup_tile_selection.bind("sell", Color.RED),
-			"mortgage": setup_tile_selection.bind("mortgage", Color.ORANGE), "unmortgage": func(): pass,
-			"trade": func(): pass, "end_turn": _declare_bankruptcy 
-		})
-		if ui.has_method("disable_unusable_liquidation_buttons"): ui.disable_unusable_liquidation_buttons()
+			"build": setup_tile_selection.bind("build", Color.GREEN),
+			"sell": setup_tile_selection.bind("sell", Color.RED),
+			"mortgage": setup_tile_selection.bind("mortgage", Color.ORANGE),
+			"unmortgage": setup_tile_selection.bind("unmortgage", Color.YELLOW),
+			"trade": func(): pass, 
+			"end_turn": _declare_bankruptcy 
+		}, true) 
 	else:
 		show_default_actions()
 
@@ -361,8 +372,22 @@ func _declare_bankruptcy():
 	player.is_bankrupt = true
 	player.properties.clear()
 	player.visible = false 
-	_end_turn()
+	ui.update_ui()
+	if not _check_win_condition():
+		_end_turn()
 
+func _check_win_condition() -> bool:
+	var active_players = []
+	for p in players:
+		if not p.is_bankrupt:
+			active_players.append(p)
+	
+	if active_players.size() == 1:
+		ui.update_turn_display(active_players[0].player_name + " WINS!")
+		ui.clear_buttons()
+		return true
+	return false
+	
 
 #----------------------------------------------------
 #Player ui hover
