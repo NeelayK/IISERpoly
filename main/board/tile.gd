@@ -1,9 +1,7 @@
 extends Node3D
 
-# --- Signals ---
 signal tile_clicked(tile)
 
-# --- Constants & Config ---
 const DEFAULT_MATERIAL = preload("res://materials/Tile/Tile.tres")
 const INK_COLOR = Color("#2e2a28")
 const FONT_SIZE_MULTIPLIER = 1.5
@@ -11,30 +9,25 @@ const LABEL_HEIGHT := 0.105
 const TILE_SIZE := Vector3(1.25, 0.2, 2.0)
 const CORNER_SIZE := Vector3(2.0, 0.2, 2.0)
 
-# --- Node References ---
 @onready var base := $Base
 @onready var property_strip := $PropertyStrip
 @onready var selection_shape := $Selection/Shape
 @onready var collision_shape := $Collision/Shape
 @onready var building_container := $BuildingContainer
-
-# --- Data & State ---
-var tile_type : BoardData.TileType
 @export var coin_model : PackedScene 
 
+var tile_type : BoardData.TileType
 var tile_data : Dictionary
 var tile_owner = null
 var funding := 0
 var is_mortgaged := false
 
-# ------------------------------------------------------------------------------
-# INITIALIZATION & MESH GENERATION
-# ------------------------------------------------------------------------------
-
+#tile initializatin
 func _ready():
 	update_tile_shape()
 	create_tile_labels()
 
+# resizes tile shape and adds property strip
 func update_tile_shape():
 	var is_corner = (tile_type == BoardData.TileType.CORNER)
 	var target_size = CORNER_SIZE if is_corner else TILE_SIZE
@@ -53,7 +46,6 @@ func update_tile_shape():
 	mat.albedo_color = BoardData.COLOR_DEFAULT
 	base.material_override = mat
 
-	# 5. Property Strip
 	if tile_type == BoardData.TileType.PROPERTY:
 		property_strip.visible = true
 		if property_strip.mesh == null: property_strip.mesh = BoxMesh.new()

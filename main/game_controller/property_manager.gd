@@ -3,9 +3,11 @@ class_name PropertyManager
 
 var board_state: Node
 
+#setup called in GC
 func setup(state_node: Node):
 	board_state = state_node
 
+#updating tile state (build,sell,mortgage,unmortgage)
 func execute_action(tile, mode: String, player):
 	match mode:
 		"build":
@@ -27,6 +29,7 @@ func execute_action(tile, mode: String, player):
 			
 	tile.refresh_buildings()
 
+#check validity for property functions (highlights in gc)
 func is_valid_for_action(tile, mode: String, player, all_tiles: Array) -> bool:
 	if tile.tile_type != BoardData.TileType.PROPERTY: return false
 	

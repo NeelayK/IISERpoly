@@ -6,6 +6,7 @@ var dice1
 var dice2
 var results = []
 
+#inital setup
 func _ready():
 	dice1 = dice_scene.instantiate()
 	dice2 = dice_scene.instantiate()
@@ -20,6 +21,7 @@ func _ready():
 	dice1.position = Vector3(-0.7, 0.3, 0)
 	dice2.position = Vector3(0.7, 0.3, 0)
 
+#calls roll for each
 func roll_dice():
 	results.clear()
 	var slot1 = Vector3(-0.7, 0.3, 0) 
@@ -27,7 +29,7 @@ func roll_dice():
 	dice1.roll(slot1, slot1)
 	dice2.roll(slot2, slot2)
 
-
+#returns die sum
 func _on_die_finished(value):
 	results.append(value)
 	if results.size() == 2:
