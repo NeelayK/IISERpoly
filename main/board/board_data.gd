@@ -57,7 +57,7 @@ const ICON_GO_TO = "res://assets/tiles/GTH.png"
 const TILES : Array[Dictionary] = [
 
 	# --- SIDE 1 ---
-	{"name":"GO","type":TileType.CORNER,"icon":ICON_GO},
+	{"name":"GO","type":TileType.CORNER,"icon":ICON_GO,"desc":"Collect 200 everytime you pass"},
 
 	{"name":"Directors Residence","type":TileType.PROPERTY,
 	"price":60,"color":"Brown",
@@ -97,7 +97,7 @@ const TILES : Array[Dictionary] = [
 	"mortgage":60},
 
 	# --- SIDE 2 ---
-	{"name":"Humanities","type":TileType.CORNER,"icon":ICON_HUMANITIES},
+	{"name":"Humanities","type":TileType.CORNER,"icon":ICON_HUMANITIES,"desc":"You dont wanna be here unless..."},
 
 	{"name":"Indoor Stadium","type":TileType.PROPERTY,
 	"price":140,"color":"Pink",
@@ -143,7 +143,7 @@ const TILES : Array[Dictionary] = [
 	"mortgage":100},
 
 	# --- SIDE 3 ---
-	{"name":"Library","type":TileType.CORNER,"icon":ICON_LIBRARY},
+	{"name":"Library","type":TileType.CORNER,"icon":ICON_LIBRARY,"desc":"Collect cash if any"},
 
 	{"name":"C Block","type":TileType.PROPERTY,
 	"price":220,"color":"Red",
@@ -189,7 +189,7 @@ const TILES : Array[Dictionary] = [
 	"mortgage":140},
 
 	# --- SIDE 4 ---
-	{"name":"Go To Humanities","type":TileType.CORNER,"icon":ICON_GO_TO},
+	{"name":"Go To Humanities","type":TileType.CORNER,"icon":ICON_GO_TO,"desc":"You can read..."},
 
 	{"name":"MSB","type":TileType.PROPERTY,
 	"price":300,"color":"Green",

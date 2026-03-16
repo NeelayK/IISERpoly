@@ -9,6 +9,7 @@ signal player_unhovered
 @export var button_scene : PackedScene
 @export var CardPanel : Control
 
+@onready var turn_display_label = $TurnDisplay/Name
 @onready var target_menu = $VictimPanel/VictimSelectionMenu
 @onready var panel_list = $PlayerPanels/PanelList
 @onready var action_container = $ActionBar/ActionButtons
@@ -51,6 +52,9 @@ func setup_players(players):
 		panel.mouse_exited.connect(_on_panel_mouse_exited)
 		panel_list.add_child(panel)
 		panels.append({ "panel": panel, "player": players[i] })
+
+func update_turn_display(text:String):
+	turn_display_label.text = text
 
 #updates player huds money
 func update_ui():
@@ -131,7 +135,7 @@ func show_auction_panel(player, property, current_bid, highest_bidder, bid_callb
 
 
 #shows tile data
-func show_property_details(tile):
+func show_property_details(tile, library_money= 0):
 	detail_panel.visible = true
 	$PropertyDetailPanel/Title.text = tile.tile_data.get("name", "Special Tile")
 	for child in rent_list.get_children(): child.queue_free()
@@ -171,6 +175,12 @@ func show_property_details(tile):
 			lbl.text = ">> " + lbl.text + " <<"
 		rent_list.add_child(lbl2)
 	
+	elif tile.tile_type == BoardData.TileType.CORNER:
+		if tile.tile_data.get("name") == "Library":
+			$PropertyDetailPanel/Owner.text = tile.tile_data.get("desc", []) + "\n Current Money: $" + str(library_money)
+		else:
+			$PropertyDetailPanel/Owner.text = tile.tile_data.get("desc", [])
+	
 	elif tile.tile_type == BoardData.TileType.PROPERTY:
 		current_level = tile.funding
 	else:
@@ -192,6 +202,7 @@ func show_drawn_card(card_data: Dictionary, is_chance: bool):
 	CardPanel.modulate = Color(1, 0.5, 0) if is_chance else Color(0.2, 0.6, 1)
 
 #helper functions
+
 func _quick_bid(amount):
 	if bid_slider.value + amount <= bid_slider.max_value:
 		bid_slider.value += amount

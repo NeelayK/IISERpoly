@@ -112,6 +112,7 @@ func handle_draw_card(player, is_chance):
 			
 		"pay":
 			player.money -= card_data["value"]
+			gc.library_reward += card_data["value"]
 			gc.ui.update_ui()
 			gc.check_liquidation(player)
 			

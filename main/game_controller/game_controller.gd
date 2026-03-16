@@ -1,6 +1,6 @@
 extends Node3D
 
-# --- Dependencies ---
+# Dependdencies
 @export var player_scene : PackedScene
 @export var dice_controller : Node
 @export var board_state : Node
@@ -10,7 +10,7 @@ extends Node3D
 @onready var property_manager = $PropertyManager
 @onready var card_manager = $CardManager
 
-# --- Constants ---
+#Constants
 const PLAYER_COUNT := 2   
 const JAIL_INDEX := 10
 const JAIL_FINE := 50
@@ -30,11 +30,10 @@ enum GameState {
 	SWAP_SELECT_PLAYER, SWAP_PROPERTIES, STEAL_PROPERTY 
 }
 
-
+#variables
 var selected_own_tile = null
 var selected_target_tile = null
 var latest_die_sum := 0
-# --- State Variables ---
 var game_state = GameState.WAITING_ROLL
 var current_action_mode = ""
 var players = []
@@ -44,9 +43,11 @@ var doubles_count = 0
 var rolled_doubles = false
 var library_reward = 0
 
-# ==========================================
-# INITIALIZATION
-# ==========================================
+#------------------------------------
+#MAIN SETUP
+#------------------------------------
+
+#INITIALIZATION: setup children, connect ui functions
 func _ready():
 	await get_tree().process_frame
 	
@@ -58,16 +59,14 @@ func _ready():
 	
 	ui.player_hovered.connect(_on_player_ui_hovered)
 	ui.player_unhovered.connect(_on_player_ui_unhovered)
-	
 	tiles = board_state.get_tiles()
 	for t in tiles: t.tile_clicked.connect(_on_tile_clicked)
-		
 	spawn_players()
 	ui.setup_players(players)
 	dice_controller.connect("dice_result", _on_dice_result)
-	
 	start_turn()
 
+#function to spawn players with global position
 func spawn_players():
 	for i in range(PLAYER_COUNT):
 		var data = PLAYER_CONFIG[i]
@@ -80,14 +79,11 @@ func spawn_players():
 		p.connect("passed_go",ui.update_ui)
 		players.append(p)
 
-# ==========================================
-# TURN LOGIC & MOVEMENT
-# ==========================================
+#state to waiting roll with jail check
 func start_turn():
 	game_state = GameState.WAITING_ROLL
 	var player = players[current_player]
-	print("\n--- ", player.player_name, "'s Turn ---")
-	
+	ui.update_turn_display(String(player.player_name) + "'s Turn ")
 	if player.is_in_jail:
 		var can_pay = player.money >= JAIL_FINE
 		var has_card = player.jail_free_cards > 0
@@ -95,10 +91,12 @@ func start_turn():
 	else:
 		ui.show_roll_button(_roll_pressed)
 
+#roll die
 func _input(event):
 	if event.is_action_pressed("ui_accept") and game_state == GameState.WAITING_ROLL:
 		if not players[current_player].is_in_jail: _roll_pressed()
 
+#handle die roll with camera movement
 func _roll_pressed():
 	if game_state != GameState.WAITING_ROLL: return
 	game_state = GameState.PLAYER_MOVING
@@ -106,6 +104,7 @@ func _roll_pressed():
 	await get_tree().create_timer(0.5).timeout
 	dice_controller.roll_dice()
 
+#handle camera movement to player with jail check, doubles, neg dice
 func _on_dice_result(die1, die2):
 	latest_die_sum = abs(die1+die2)
 	var player = players[current_player]
@@ -132,6 +131,7 @@ func _on_dice_result(die1, die2):
 		await player.move_steps(die1 + die2, tiles)
 	resolve_tile(player)
 
+#ends turn with jail check
 func _end_turn():
 	var player = players[current_player]
 	if rolled_doubles and not player.is_in_jail:
@@ -142,9 +142,11 @@ func _end_turn():
 		current_player = (current_player + 1) % players.size()
 		start_turn()
 
-# ==========================================
-# JAIL LOGIC
-# ==========================================
+#--------------------------------------
+#JAIL
+#--------------------------------------
+
+#sends to jail
 func send_to_jail(player):
 	player.is_in_jail = true
 	player.jail_turns = 0
@@ -154,27 +156,26 @@ func send_to_jail(player):
 	player.global_position = tiles[JAIL_INDEX].global_position + Vector3(0, 0.1, 0)
 	show_default_actions()
 
+#jail helpers
 func _pay_jail_fine():
 	players[current_player].money -= JAIL_FINE
 	_free_from_jail()
-
 func _use_jail_card():
 	players[current_player].jail_free_cards -= 1
 	_free_from_jail()
-
 func _free_from_jail():
 	players[current_player].is_in_jail = false
 	players[current_player].jail_turns = 0
 	ui.update_ui()
 	start_turn()
-
 func _handle_jail_roll(player, die1, die2):
 	player.jail_turns += 1
 	if die1 == die2:
 		player.is_in_jail = false
 		player.jail_turns = 0
-		await player.move_steps(die1 + die2, tiles)
-		resolve_tile(player)
+		#await player.move_steps(die1 + die2, tiles)
+		#resolve_tile(player)
+		start_turn()
 	else:
 		if player.jail_turns >= MAX_JAIL_TURNS:
 			player.money -= JAIL_FINE
@@ -186,19 +187,19 @@ func _handle_jail_roll(player, die1, die2):
 		else:
 			show_default_actions()
 
-# ==========================================
-# TILE RESOLUTION & ACTIONS
-# ==========================================
+#--------------
+#
+#--------------
+
+#resolve tile
 func resolve_tile(player):
-	
 	var tile = tiles[player.current_tile]
 	ui.show_property_details(tile)
-	
-	if player.current_tile == 30: # Go to Jail
+	if player.current_tile == 30:
 		send_to_jail(player)
 		return
 		
-	if player.current_tile == 20: # Free Parking / Library
+	if player.current_tile == 20:
 		player.money += library_reward
 		library_reward = 0
 		ui.update_ui()
@@ -241,8 +242,7 @@ func resolve_tile(player):
 	else:
 		show_default_actions()
 
-
-
+#buy property
 func _buy_property():
 	var player = players[current_player]
 	var tile = tiles[player.current_tile]
@@ -253,6 +253,7 @@ func _buy_property():
 	ui.show_property_details(tile)
 	show_default_actions()
 
+#show default actions
 func show_default_actions(camera_pan:bool= true):
 	game_state = GameState.TURN_ACTIONS
 	if camera_pan:
@@ -263,13 +264,14 @@ func show_default_actions(camera_pan:bool= true):
 		"sell": setup_tile_selection.bind("sell", Color.RED),
 		"mortgage": setup_tile_selection.bind("mortgage", Color.ORANGE),
 		"unmortgage": setup_tile_selection.bind("unmortgage", Color.YELLOW),
-		"trade": func(): pass, # Placeholder
+		"trade": func(): pass,
 		"end_turn": _end_turn
 	})
 
-# ==========================================
-# AUCTION DELEGATION
-# ==========================================
+#-------------------
+#Auction
+#------------------
+
 func _start_auction():
 	ui.clear_buttons()
 	game_state = GameState.AUCTION
@@ -283,9 +285,9 @@ func _on_auction_finished(winner, property, final_price):
 		ui.update_ui()
 	show_default_actions()
 
-# ==========================================
+#-----------------------------------
 # PROPERTY SELECTION DELEGATION
-# ==========================================
+#-----------------------------------
 func setup_tile_selection(mode: String, color: Color):
 	game_state = GameState.SELECTING_TILE
 	current_action_mode = mode
@@ -295,19 +297,12 @@ func setup_tile_selection(mode: String, color: Color):
 		if property_manager.is_valid_for_action(t, mode, player, tiles):
 			t.set_highlight(true, color)
 
-
-
 func _on_tile_clicked(tile):
 	ui.show_property_details(tile)
 	var player = players[current_player]
 	if game_state == GameState.SELECTING_TILE:
 		if property_manager.is_valid_for_action(tile, current_action_mode, player, tiles):
 			property_manager.execute_action(tile, current_action_mode, player)
-			
-			# Special refresh for grouped utilities/cafes
-			if tile.tile_type in [BoardData.TileType.CAFE, BoardData.TileType.UTILITY]:
-				for t in tiles:
-					if t.tile_type == tile.tile_type and t.tile_owner == player: t.refresh_buildings()
 			
 			ui.show_property_details(tile)
 			ui.update_ui()
@@ -320,7 +315,6 @@ func _on_tile_clicked(tile):
 		
 		if tile.tile_owner == player:
 			if game_state == GameState.SWAP_PROPERTIES:
-				# Local check for buildings (funding) to prevent selecting
 					var can_swap = true
 					for t in tiles:
 						if t.tile_type == BoardData.TileType.PROPERTY and t.tile_data.get("color") == tile.tile_data.get("color"):
@@ -340,9 +334,11 @@ func _on_tile_clicked(tile):
 			
 		elif game_state == GameState.STEAL_PROPERTY and selected_target_tile != null:
 			ui.show_confirm_button("Confirm Steal", Callable($CardManager, "complete_action"))
-# ==========================================
+
+#-----------------------------
 # BANKRUPTCY & UI HIGHLIGHTS
-# ==========================================
+#------------------------------
+
 func check_liquidation(player):
 	if player.money < 0:
 		game_state = GameState.LIQUIDATION
@@ -367,6 +363,10 @@ func _declare_bankruptcy():
 	player.visible = false 
 	_end_turn()
 
+
+#----------------------------------------------------
+#Player ui hover
+#----------------------------------------------------
 func _on_player_ui_hovered(player_index: int):
 	if game_state == GameState.SELECTING_TILE: return 
 	var hovered_player = players[player_index]
