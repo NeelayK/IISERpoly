@@ -1,15 +1,14 @@
 extends Node3D
 
-var gc : Node3D # Reference to GameController
+var gc : Node3D
 @onready var board_state := $"../../Board/BoardState"
 @onready var ui := $"../../UI"
 @onready var camera :=$"../../CameraRIG"
 
-# ==========================================
-# CARD DATABASES (30 Chance, 30 Fund)
-# ==========================================
+#region Card Data
+
 const chance_cards := [
-	
+	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
 	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
 	{"text": "Director catches you for not walking on the footpath. Go back 3 spaces.", "type": "move", "value": -3},
 	{"text": "You bunk classes. Advance to the Library and collect the library reward.", "type": "move_to", "target": 20},
@@ -23,7 +22,6 @@ const chance_cards := [
 	{"text": "You break your left phalange at the gym. Go back 6 spaces.", "type": "move", "value": -6},
 	{"text": "Someone at iCafe ate your sandwich. Collect 50 from everyone.", "type": "collect_all", "value": 50},
 	{"text": "You discover how to burn vegetable soup faster than stir-fried vegetables. Biology Block awards you 150.", "type": "collect", "value": 150},
-	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
 	{"text": "You got an A+ in a course. Take another turn.", "type": "extra_turn"},
 	{"text": "You encounter a wild boar. Flee to Humanities.", "type": "go_to_jail"},
 	{"text": "You sprint across campus. Advance 5 spaces.", "type": "move", "value": 5},
@@ -77,21 +75,19 @@ const fund_cards := [
 	{"text": "Rawaaz preperations begin. Pay 100.", "type": "pay", "value": 100}
 ]
 
-# ==========================================
-# SETUP & EXECUTION
-# ==========================================
+#endregion
+
+#FUnction called in Game Controller
 func setup(game_controller_ref: Node3D):
 	gc = game_controller_ref
 
+#function for handling game_state,card draw,type
 func handle_draw_card(player, is_chance):
 	gc.game_state = gc.GameState.TURN_ACTIONS
-	
 	var card_list = chance_cards if is_chance else fund_cards
 	var card_data = card_list.pick_random()
-	
 	gc.ui.show_drawn_card(card_data, is_chance)
 	await gc.ui.card_accepted 
-	
 	match card_data["type"]:
 		"negative_dice":
 			player.negative_dice = true
@@ -103,9 +99,9 @@ func handle_draw_card(player, is_chance):
 			_execute_money_swap(gc.players[gc.current_player], gc.players[target_idx])
 		"swap_property":
 					_start_property_swap()
-					return # Wait for manual confirmation
+					return
 
-		"steal_property": # Add this to your card database!
+		"steal_property":
 			_start_property_steal()
 			return
 			
@@ -171,9 +167,7 @@ func handle_draw_card(player, is_chance):
 		_: 
 			gc.show_default_actions()
 
-# ==========================================
-# SWAP LOGIC
-# ==========================================
+#money swap function
 func _execute_money_swap(p1, p2):
 	var temp_money = p1.money
 	p1.money = p2.money
@@ -181,107 +175,57 @@ func _execute_money_swap(p1, p2):
 	gc.ui.update_ui()
 	gc.show_default_actions()
 
-func complete_property_swap(own_tile, their_tile):
-	var me = gc.players[gc.current_player]
-	var victim = their_tile.tile_owner
-	
-	me.properties.erase(own_tile)
-	victim.properties.erase(their_tile)
-	
-	own_tile.tile_owner = victim
-	their_tile.tile_owner = me
-	
-	me.properties.append(their_tile)
-	victim.properties.append(own_tile)
-	
-	for t in gc.tiles: t.set_highlight(false)
-	if gc.ui.has_method("hide_instruction"): gc.ui.hide_instruction()
-	gc.ui.update_ui()
-	gc.show_default_actions()
-
-
-# ==========================================
-# SWAP & STEAL LOGIC
-# ==========================================
-
+#highlights properties for SWAP_STATE
 func _update_swap_highlights():
 	var player = gc.players[gc.current_player]
-	
 	for t in gc.tiles:
-		t.set_highlight(false) # Reset all
-		
-		# Only highlight buyable tiles
+		t.set_highlight(false)
 		if not t.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.UTILITY, BoardData.TileType.CAFE]:
 			continue
 
 		if t.tile_owner == player:
 			if gc.game_state == gc.GameState.SWAP_PROPERTIES:
-				# Check if ANY tile in this color group has funding (buildings/coins)
 				var has_buildings = false
 				var tile_color = t.tile_data.get("color")
 				
 				for other_t in gc.tiles:
 					if other_t.tile_type == BoardData.TileType.PROPERTY and other_t.tile_data.get("color") == tile_color:
-						# Safely check the funding variable from tile.gd
 						if other_t.funding > 0:
 							has_buildings = true
 							break
 				
 				if not has_buildings:
 					if t == gc.selected_own_tile:
-						t.set_highlight(true, Color.YELLOW) # Selected Own
+						t.set_highlight(true, Color.YELLOW)
 					else:
-						t.set_highlight(true, Color.GREEN) # Available Own
+						t.set_highlight(true, Color.GREEN)
 		else:
-			# Target properties (Opponent or Unowned)
 			var t_color = t.tile_data.get("color", "")
 			if t.tile_owner == null or not board_state.has_monopoly(t.tile_owner, t_color):
 				if t == gc.selected_target_tile:
-					t.set_highlight(true, Color.MAGENTA) # Selected Target
+					t.set_highlight(true, Color.MAGENTA) 
 				else:
-					t.set_highlight(true, Color.RED) # Available Target
-					
-					
-# Helper to find all tiles in a set (Monopoly)
-func _get_property_set(owner, tile) -> Array:
-	var set_tiles = []
-	var target_color = tile.tile_data.get("color")
-	
-	# If it's a standard property, get the whole color group
-	if tile.tile_type == BoardData.TileType.PROPERTY and target_color != null:
-		for t in gc.tiles:
-			if t.tile_type == BoardData.TileType.PROPERTY and t.tile_data.get("color") == target_color:
-				# Only include if the person we are swapping with actually owns it
-				if t.tile_owner == owner:
-					set_tiles.append(t)
-	else:
-		# For Utilities/Cafes/Unowned, just return the single tile
-		set_tiles.append(tile)
-		
-	return set_tiles
+					t.set_highlight(true, Color.RED)
+
+#completes SWAP/STEAL STATE
 func complete_action():
 	var player = gc.players[gc.current_player]
-	
 	if gc.game_state == gc.GameState.SWAP_PROPERTIES:
 		var my_tile = gc.selected_own_tile
 		var target_tile = gc.selected_target_tile
 		var victim = target_tile.tile_owner
 		
-		# 1. Remove from old owners
 		player.properties.erase(my_tile)
 		if victim != null:
 			victim.properties.erase(target_tile)
 			
-		# 2. Assign new owners
 		my_tile.tile_owner = victim
 		target_tile.tile_owner = player
 		
-		# 3. Add to new owners' lists
 		if victim != null:
 			victim.properties.append(my_tile)
 		player.properties.append(target_tile)
 		
-		# Refresh coins/visuals for both affected tiles
 		my_tile.refresh_buildings()
 		target_tile.refresh_buildings()
 			
@@ -289,28 +233,22 @@ func complete_action():
 		var target_tile = gc.selected_target_tile
 		var victim = target_tile.tile_owner
 		
-		# 1. Remove from victim
 		if victim != null:
 			victim.properties.erase(target_tile)
 			
-		# 2. Assign to me
 		target_tile.tile_owner = player
 		player.properties.append(target_tile)
 		
-		# Refresh visuals
 		target_tile.refresh_buildings()
 
-	# Cleanup
 	for t in gc.tiles: 
 		t.set_highlight(false)
 		
-	gc.ui.hide_instruction() # Closes the VictimPanel
+	gc.ui.hide_instruction()
 	gc.ui.update_ui()
 	gc.show_default_actions()
 	gc.game_state = gc.GameState.TURN_ACTIONS
-# ==========================================
-# SWAP & STEAL LOGIC
-# ==========================================
+
 
 func _start_property_swap():
 	var player = gc.players[gc.current_player]
