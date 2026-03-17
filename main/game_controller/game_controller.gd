@@ -11,7 +11,7 @@ extends Node3D
 @onready var card_manager = $CardManager
 
 #Constants
-const PLAYER_COUNT := 3   
+const PLAYER_COUNT := 2
 const JAIL_INDEX := 10
 const JAIL_FINE := 50
 const MAX_JAIL_TURNS := 3
@@ -27,7 +27,7 @@ const PLAYER_CONFIG = [
 enum GameState { 
 	WAITING_ROLL, PLAYER_MOVING, PROPERTY_DECISION, TURN_ACTIONS, 
 	AUCTION, SELECTING_TILE, LIQUIDATION, 
-	SWAP_SELECT_PLAYER, SWAP_PROPERTIES, STEAL_PROPERTY 
+	SWAP_SELECT_PLAYER, SWAP_PROPERTIES, STEAL_PROPERTY, TRADING 
 }
 
 #variables
@@ -42,6 +42,7 @@ var tiles = []
 var doubles_count = 0
 var rolled_doubles = false
 var library_reward = 0
+var is_reviewing_trade := false
 
 #------------------------------------
 #MAIN SETUP
@@ -64,6 +65,9 @@ func _ready():
 	spawn_players()
 	ui.setup_players(players)
 	dice_controller.connect("dice_result", _on_dice_result)
+	ui.trade_accepted.connect(_on_trade_button_pressed)
+	ui.trade_cancelled.connect(_cancel_trade)
+	ui.trade_started.connect(func(player): start_trade_with(player))
 	start_turn()
 
 #function to spawn players with global position
@@ -271,7 +275,7 @@ func show_default_actions(camera_pan:bool= true):
 		"sell": setup_tile_selection.bind("sell", Color.RED),
 		"mortgage": setup_tile_selection.bind("mortgage", Color.ORANGE),
 		"unmortgage": setup_tile_selection.bind("unmortgage", Color.YELLOW),
-		"trade": func(): pass,
+		"trade": func(): ui.trade_selector(players,current_player), 
 		"end_turn": _end_turn
 	})
 
@@ -293,7 +297,7 @@ func _on_auction_finished(winner, property, final_price):
 	show_default_actions()
 
 #-----------------------------------
-# PROPERTY SELECTION DELEGATION
+# PROPERTY SELECTION
 #-----------------------------------
 func setup_tile_selection(mode: String, color: Color):
 	game_state = GameState.SELECTING_TILE
@@ -316,6 +320,20 @@ func _on_tile_clicked(tile):
 			for t in tiles: t.set_highlight(false)
 			game_state = GameState.TURN_ACTIONS
 		check_liquidation(player)
+		
+	elif game_state == GameState.TRADING and not is_reviewing_trade:
+		if not tile.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.CAFE, BoardData.TileType.UTILITY]:
+			return
+			
+		if tile.tile_owner == ui.current_trade.p1 or tile.tile_owner == ui.current_trade.p2:
+			
+			if _color_group_has_funding(tile):
+				print("Cannot trade! You must sell buildings/funds in this set first.")
+				return 
+				
+			ui.toggle_trade_property(tile)
+		return
+	
 	elif game_state in [GameState.SWAP_PROPERTIES, GameState.STEAL_PROPERTY]:
 		if not tile.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.UTILITY, BoardData.TileType.CAFE]:
 			return
@@ -356,7 +374,7 @@ func check_liquidation(player):
 			"sell": setup_tile_selection.bind("sell", Color.RED),
 			"mortgage": setup_tile_selection.bind("mortgage", Color.ORANGE),
 			"unmortgage": setup_tile_selection.bind("unmortgage", Color.YELLOW),
-			"trade": func(): pass, 
+			"trade": func(): ui.trade_selector(players,current_player), 
 			"end_turn": _declare_bankruptcy 
 		}, true) 
 	else:
@@ -404,3 +422,66 @@ func _on_player_ui_unhovered():
 		t.set_highlight(false)
 	if game_state in [GameState.SWAP_PROPERTIES, GameState.STEAL_PROPERTY]:
 		$CardManager._update_swap_highlights()
+
+#----------------------
+#Trading
+#----------------------
+
+func start_trade_with(target_player):
+	game_state = GameState.TRADING
+	camera_rig.enable_tabletop_pan(players[current_player].global_position)
+	ui.open_trade_panel(players[current_player], target_player)
+
+func _color_group_has_funding(tile) -> bool:
+	if tile.tile_type != BoardData.TileType.PROPERTY:
+		return false
+	var target_color = tile.tile_data.get("color", "")
+	for t in tiles:
+		if t.tile_type == BoardData.TileType.PROPERTY and t.tile_data.get("color", "") == target_color:
+			if t.funding > 0:
+				return true
+	return false
+
+func _execute_trade():
+	var p1 = ui.current_trade.p1
+	var p2 = ui.current_trade.p2
+	p1.money -= ui.p1_cash_input.value
+	p2.money += ui.p1_cash_input.value
+	p2.money -= ui.p2_cash_input.value
+	p1.money += ui.p2_cash_input.value
+	for t in ui.current_trade.p1_props:
+		p1.properties.erase(t)
+		p2.properties.append(t)
+		t.tile_owner = p2
+		t.refresh_buildings()
+	for t in ui.current_trade.p2_props:
+		p2.properties.erase(t)
+		p1.properties.append(t)
+		t.tile_owner = p1
+		t.refresh_buildings()
+
+	is_reviewing_trade = false
+	ui.close_trade_panel()
+	ui.update_ui()
+	camera_rig.look_at_player(players[current_player])
+	show_default_actions()
+	ui.update_turn_display(String(players[current_player].player_name) + "'s Turn ")
+	game_state = GameState.TURN_ACTIONS
+
+func _cancel_trade():
+	if is_reviewing_trade:
+		print("Trade Declined by ", ui.current_trade.p2.player_name)
+	
+	is_reviewing_trade = false
+	ui.close_trade_panel()
+	camera_rig.look_at_player(players[current_player])
+	show_default_actions()
+	game_state = GameState.TURN_ACTIONS
+	
+func _on_trade_button_pressed():
+	if not is_reviewing_trade:
+		is_reviewing_trade = true
+		ui.open_trade_review()
+		ui.update_turn_display("Waiting for " + ui.current_trade.p2.player_name + "...")
+	else:
+		_execute_trade()

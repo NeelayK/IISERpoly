@@ -4,6 +4,9 @@ signal card_accepted
 signal player_hovered(player_index)
 signal target_selected(index: int)
 signal player_unhovered
+signal trade_cancelled
+signal trade_accepted
+signal trade_started(player)
 
 @export var player_panel_scene : PackedScene
 @export var button_scene : PackedScene
@@ -30,17 +33,33 @@ signal player_unhovered
 @onready var plus500 = $AuctionPanel/"VBoxContainer/QuickMoney/+500"
 @onready var title = CardPanel.get_node("VBoxContainer/Title")
 @onready var desc = CardPanel.get_node("VBoxContainer/Description")
+@onready var trade_panel = $TradePanel
+@onready var p1_head = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1/Head
+@onready var p2_head = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2/Head
+@onready var p1_property_list = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1/PropertyList
+@onready var p2_property_list = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2/PropertyList
+@onready var p1_total_label = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1/Total
+@onready var p2_total_label = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2/Total
+@onready var p1_cash_input = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1/HSlider
+@onready var p2_cash_input = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2/HSlider
+@onready var confirm_trade_btn = $TradePanel/VBoxContainer/Buttons/Confirm
+@onready var cancel_trade_btn = $TradePanel/VBoxContainer/Buttons/Cancel
+@onready var p1_cash_label = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1/Cash
+@onready var p2_cash_label = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2/Cash
 
 var panels = []
 var buttons = {}
 
-#initial setup (only slider)
+#initial setup (bid and trade sliders)
 func _ready():
 	bid_slider.step = 10
 	bid_slider.min_value = 0
 	bid_slider.max_value = 5000
 	bid_slider.value_changed.connect(_on_slider_changed)
-
+	p1_cash_input.value_changed.connect(func(_val): update_trade_ui())
+	p2_cash_input.value_changed.connect(func(_val): update_trade_ui())
+	confirm_trade_btn.pressed.connect(func():trade_accepted.emit())
+	cancel_trade_btn.pressed.connect(func():trade_cancelled.emit())
 #player hud
 func setup_players(players):
 	for i in range(players.size()):
@@ -196,6 +215,10 @@ func show_property_details(tile, library_money= 0):
 	
 	elif tile.tile_type == BoardData.TileType.PROPERTY:
 		current_level = tile.funding
+	
+	elif tile.tile_type == BoardData.TileType.CAFE:
+		current_level = get_owner_count(tile)-1
+	
 	else:
 		current_level = get_owner_count(tile)
 
@@ -283,3 +306,113 @@ func hide_instruction():
 	$VictimPanel.visible = false
 	for child in target_menu.get_children(): 
 		child.queue_free()
+
+
+#-------------
+#trading
+#--------------
+
+func trade_selector(players: Array, current_idx: int):
+	$VictimPanel.visible = true
+	$VictimPanel/Instructions.text = "Select Player You Want to Trade With:"
+	
+	for child in target_menu.get_children(): 
+		child.queue_free()
+	
+	for i in range(players.size()):
+		if i == current_idx or players[i].is_bankrupt: 
+			continue
+		
+		var btn = Button.new()
+		btn.text = "Trade with " + players[i].player_name
+		btn.pressed.connect(func(): 
+			$VictimPanel.visible = false
+			current_trade["p2"]=players[i]
+			current_trade["p1"]=players[current_idx]
+			trade_started.emit(players[i])
+			
+		)
+		target_menu.add_child(btn)
+
+var current_trade = {
+	"p1": null,
+	"p2": null,
+	"p1_props": [],
+	"p2_props": []
+}
+
+func open_trade_panel(player1, player2):
+	current_trade.p1 = player1
+	current_trade.p2 = player2
+	current_trade.p1_props.clear()
+	current_trade.p2_props.clear()
+	p1_head.text = player1.player_name
+	p2_head.text = player2.player_name
+	p1_cash_input.value = 0
+	p1_cash_input.max_value = player1.money
+	p2_cash_input.value = 0
+	p2_cash_input.max_value = player2.money
+	p1_cash_input.editable = true
+	p2_cash_input.editable = true
+	confirm_trade_btn.text = "Propose Trade"
+	cancel_trade_btn.text = "Cancel"
+	$TradePanel/VBoxContainer/Head.text = "Create Trade Offer"
+	trade_panel.show()
+	update_trade_ui()
+
+func toggle_trade_property(tile):
+	if tile.tile_owner == current_trade.p1:
+		if tile in current_trade.p1_props:
+			current_trade.p1_props.erase(tile)
+		else:
+			current_trade.p1_props.append(tile)
+			
+	elif tile.tile_owner == current_trade.p2:
+		if tile in current_trade.p2_props:
+			current_trade.p2_props.erase(tile)
+		else:
+			current_trade.p2_props.append(tile)
+	
+	update_trade_ui()
+
+func update_trade_ui():
+	for child in p1_property_list.get_children(): child.queue_free()
+	for child in p2_property_list.get_children(): child.queue_free()
+	var p1_prop_value = 0
+	for t in current_trade.p1_props:
+		var price = t.tile_data.get("price", 0)
+		p1_prop_value += price
+		var lbl = Label.new()
+		lbl.text = t.tile_data.get("name", "Property") + " ($" + str(price) + ")"
+		p1_property_list.add_child(lbl)
+		
+	var p2_prop_value = 0
+	for t in current_trade.p2_props:
+		var price = t.tile_data.get("price", 0)
+		p2_prop_value += price
+		var lbl = Label.new()
+		lbl.text = t.tile_data.get("name", "Property") + " ($" + str(price) + ")"
+		p2_property_list.add_child(lbl)
+
+	var p1_cash = p1_cash_input.value
+	var p2_cash = p2_cash_input.value
+	p1_cash_label.text = "$" + str(p1_cash)
+	p2_cash_label.text = "$" + str(p2_cash)
+	p1_total_label.text = "Total Value: $" + str(p1_prop_value + p1_cash)
+	p2_total_label.text = "Total Value: $" + str(p2_prop_value + p2_cash)
+	
+	var p1_giving = current_trade.p1_props.size() > 0 or p1_cash > 0
+	var p2_giving = current_trade.p2_props.size() > 0 or p2_cash > 0
+	confirm_trade_btn.disabled = not (p1_giving and p2_giving)
+
+func close_trade_panel():
+	trade_panel.hide()
+	
+func open_trade_review():
+	p1_cash_input.editable = false
+	p2_cash_input.editable = false
+	confirm_trade_btn.text = "Accept Trade"
+	cancel_trade_btn.text = "Decline Trade"
+	$TradePanel/VBoxContainer/Head.text = current_trade.p2.player_name + ": Review this offer!"
+	update_trade_ui()
+	

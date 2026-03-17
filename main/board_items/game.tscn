@@ -175,6 +175,7 @@ grow_horizontal = 2
 layout_mode = 2
 
 [node name="PropertyDetailPanel" type="Panel" parent="UI" unique_id=1575429712]
+visible = false
 offset_left = 1086.0
 offset_top = 283.0
 offset_right = 1253.0
@@ -262,27 +263,87 @@ layout_mode = 2
 text = "Trade Offer"
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="UI/TradePanel/VBoxContainer" unique_id=250908224]
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/TradePanel/VBoxContainer" unique_id=354814544]
+custom_minimum_size = Vector2(0, 230)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer" unique_id=250908224]
 layout_mode = 2
 alignment = 1
 
-[node name="P1" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/HBoxContainer" unique_id=327417729]
+[node name="P1" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer" unique_id=327417729]
 layout_mode = 2
 
-[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/HBoxContainer/P1" unique_id=2093945127]
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=2093945127]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 text = "You Get"
 horizontal_alignment = 1
 
-[node name="P2" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/HBoxContainer" unique_id=694520681]
+[node name="Total" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=1784040606]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Total:"
+horizontal_alignment = 1
+
+[node name="HSlider" type="HSlider" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=1034681119]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Cash" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=112800955]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Cash: "
+horizontal_alignment = 1
+
+[node name="PropertyList" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=245608310]
 layout_mode = 2
 
-[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/HBoxContainer/P2" unique_id=829191792]
+[node name="P2" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer" unique_id=694520681]
+layout_mode = 2
+
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=829191792]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 text = "You Get"
 horizontal_alignment = 1
+
+[node name="Total" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=349416530]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Total: "
+horizontal_alignment = 1
+
+[node name="HSlider" type="HSlider" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=168935942]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+step = 10.0
+
+[node name="Cash" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=474491726]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Cash:"
+horizontal_alignment = 1
+
+[node name="PropertyList" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=1312600433]
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="UI/TradePanel/VBoxContainer" unique_id=259255386]
+layout_mode = 2
+alignment = 1
+
+[node name="Cancel" type="Button" parent="UI/TradePanel/VBoxContainer/Buttons" unique_id=1978238172]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Cancel"
+
+[node name="Confirm" type="Button" parent="UI/TradePanel/VBoxContainer/Buttons" unique_id=1087901000]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Confirm"
 
 [node name="TurnDisplay" type="Panel" parent="UI" unique_id=71991479]
 custom_minimum_size = Vector2(200, 50)
