@@ -46,6 +46,10 @@ signal trade_started(player)
 @onready var cancel_trade_btn = $TradePanel/VBoxContainer/Buttons/Cancel
 @onready var p1_cash_label = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1/Cash
 @onready var p2_cash_label = $TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2/Cash
+@onready var pause_menu = $PauseMenu
+@onready var resume_btn = $PauseMenu/VBoxContainer/Resume
+@onready var quit_btn = $PauseMenu/VBoxContainer/Quit
+@onready var pause_icon_btn = $PauseButton
 
 var panels = []
 var buttons = {}
@@ -62,6 +66,13 @@ func _ready():
 	p2_cash_input.value_changed.connect(func(_val): update_trade_ui())
 	confirm_trade_btn.pressed.connect(func():trade_accepted.emit())
 	cancel_trade_btn.pressed.connect(func():trade_cancelled.emit())
+	pause_menu.hide()
+	
+	# Connect Pause Buttons
+	resume_btn.pressed.connect(_on_resume_pressed)
+	quit_btn.pressed.connect(_on_quit_pressed)
+	pause_icon_btn.pressed.connect(toggle_pause)
+
 #player hud
 func setup_players(players):
 	for i in range(players.size()):
@@ -442,3 +453,20 @@ func open_trade_review():
 	$TradePanel/VBoxContainer/Head.text = current_trade.p2.player_name + ": Review this offer!"
 	update_trade_ui()
 	
+#-------------
+#PauseMenu
+#-------------
+func toggle_pause():
+	var is_paused = !get_tree().paused
+	get_tree().paused = is_paused
+	pause_menu.visible = is_paused
+	
+	if is_paused:
+		resume_btn.grab_focus()
+
+func _on_resume_pressed():
+	toggle_pause()
+
+func _on_quit_pressed():
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://main/main_menu/main_menu.tscn")
