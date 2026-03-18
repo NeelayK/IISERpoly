@@ -20,6 +20,11 @@ var pan_offset := Vector3(0, 3.0, 4.0)
 var yaw_target := 0.0
 var yaw_current := 0.0
 
+var cursor_pos := Vector2.ZERO
+
+func _ready():
+	cursor_pos = get_viewport().size / 2.0
+
 #switch focus to dice while maintaing yaw
 func show_dice(dice_center := Vector3.ZERO):
 	pan_mode = false
@@ -59,9 +64,56 @@ func enable_tabletop_pan(start_pos := Vector3.ZERO): #switch to tabletop pan
 	tracked_player = null
 	pan_target = start_pos
 
-func _process(delta): #calculating frames
+func _input(event):
+	if not pan_mode or is_transitioning: 
+		return
+
+	# --- 1. Panning (Mouse Right-Drag OR Mobile Finger-Drag) ---
+	var is_mouse_drag = event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	var is_touch_drag = event is InputEventScreenDrag
+	
+	if is_mouse_drag or is_touch_drag:
+		var right = global_transform.basis.x
+		var forward = global_transform.basis.z
+		forward.y = 0
+		forward = forward.normalized()
+		
+		# Mobile touch usually needs higher sensitivity than a mouse
+		var final_sens = mouse_pan_sensitivity
+		if is_touch_drag:
+			final_sens *= 2.5 
+		
+		var pan_move = -right * event.relative.x * pan_speed * final_sens \
+					   - forward * event.relative.y * pan_speed * final_sens
+		
+		var new_target = pan_target + pan_move
+		
+		# Keep camera within board limits
+		var clamped_target = Vector3(
+			clamp(new_target.x, -7.5, 7.5),
+			new_target.y,
+			clamp(new_target.z, -7.5, 7.5)
+		)
+
+		# Auto-Rotate when hitting the "edges" of the screen while dragging
+		if clamped_target != new_target and not is_rotating_pan:
+			if abs(event.relative.x) > abs(event.relative.y) and abs(event.relative.x) > rotation_threshold:
+				rotate_pan(-event.relative.x)
+
+		pan_target = clamped_target
+
+	if event.is_action_pressed("zoom_in"):
+		pan_offset.y = clamp(pan_offset.y - (zoom_speed * zoom_sensitivity * 0.1), 3.0, 7.5)
+		pan_offset.z = clamp(pan_offset.z - (zoom_speed * zoom_sensitivity * 0.1), 2.0, 7.0)
+	
+	if event.is_action_pressed("zoom_out"):
+		pan_offset.y = clamp(pan_offset.y + (zoom_speed * zoom_sensitivity * 0.1), 3.0, 7.5)
+		pan_offset.z = clamp(pan_offset.z + (zoom_speed * zoom_sensitivity * 0.1), 2.0, 7.0)
+
+func _process(delta):
 	camera.position = camera.position.lerp(Vector3.ZERO, 5.0 * delta)
 	camera.rotation = camera.rotation.lerp(Vector3.ZERO, 5.0 * delta)
+	
 	if tracked_player and not is_transitioning:
 		_process_player_tracking(delta)
 	elif pan_mode and not is_transitioning:
@@ -102,40 +154,3 @@ func rotate_pan(drag_direction: float): #calculates rotation at corners
 	
 	await tween.finished
 	is_rotating_pan = false
-
-func _input(event): #input handling
-	if not pan_mode or is_transitioning: 
-		return
-
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		var right = global_transform.basis.x
-		var forward = global_transform.basis.z
-		forward.y = 0
-		forward = forward.normalized()
-		
-		var pan_move = -right * event.relative.x * pan_speed * mouse_pan_sensitivity \
-			   - forward * event.relative.y * pan_speed * mouse_pan_sensitivity
-		var new_target = pan_target + pan_move
-		
-		var clamped_target = Vector3(
-			clamp(new_target.x, -7.5, 7.5),
-			new_target.y,
-			clamp(new_target.z, -7.5, 7.5)
-		)
-
-		if clamped_target != new_target and not is_rotating_pan:
-			if abs(event.relative.x) > abs(event.relative.y) and abs(event.relative.x) > rotation_threshold:
-				rotate_pan(-event.relative.x)
-
-		pan_target = clamped_target
-
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			pan_offset.y -= zoom_speed * zoom_sensitivity * 0.1
-			pan_offset.z -= zoom_speed * zoom_sensitivity * 0.1
-		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			pan_offset.y += zoom_speed * zoom_sensitivity * 0.1
-			pan_offset.z += zoom_speed * zoom_sensitivity * 0.1
-			
-		pan_offset.y = clamp(pan_offset.y, 3.0, 7.5)
-		pan_offset.z = clamp(pan_offset.z, 2.0, 7.0)

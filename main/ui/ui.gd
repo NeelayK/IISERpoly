@@ -49,9 +49,11 @@ signal trade_started(player)
 
 var panels = []
 var buttons = {}
+var is_mobile:bool = false
 
 #initial setup (bid and trade sliders)
 func _ready():
+	is_mobile = OS.has_feature("mobile")
 	bid_slider.step = 10
 	bid_slider.min_value = 0
 	bid_slider.max_value = 5000
@@ -99,49 +101,73 @@ func clear_buttons():
 	buttons.clear()
 
 #creates button in action container
-func create_button(id:String, text:String, helper:String, callback:Callable):
+func create_button(action_name: String, text: String, fallback_helper: String, callback: Callable):
 	var btn = button_scene.instantiate()
 	btn.text = text
-	btn.get_node("HelperLabel").text = helper
+	var helper_label = btn.get_node("HelperLabel")
+	
+	if is_mobile:
+		helper_label.visible = false
+	else:
+		if InputMap.has_action(action_name):
+			var events = InputMap.action_get_events(action_name)
+			if events.size() > 0:
+				var helper_text = events[0].as_text().get_slice(" (", 0)
+				helper_label.text = helper_text.replace(" - Physical", "")
+				print(helper_label.text)
+				
+			else:
+				helper_label.text = fallback_helper
+		else:
+			helper_label.text = fallback_helper
+
 	if callback.is_valid():
 		btn.pressed.connect(callback)
+		
+	if InputMap.has_action(action_name):
+		var shortcut = Shortcut.new()
+		var event = InputEventAction.new()
+		event.action = action_name
+		shortcut.events = [event]
+		btn.shortcut = shortcut 
+		
 	action_container.add_child(btn)
-	buttons[id] = btn
+	buttons[action_name] = btn
 
 #create roll button
 func show_roll_button(callback):
 	clear_buttons()
-	create_button("roll", "Roll Dice", "SPACE", callback)
+	create_button("action_roll", "Roll Dice", "Space", callback)
 
 #create buy/acution buttons
 func show_property_buttons(buy_callback: Callable, auction_callback: Callable, can_buy: bool):
 	clear_buttons()
-	create_button("buy", "Buy Property", "B", buy_callback)
+	create_button("action_buy", "Buy Property", "X", buy_callback)
 	if not can_buy:
-		buttons["buy"].disabled = true
-		buttons["buy"].text = "Not Enough Funds"
-	create_button("auction", "Auction", "A", auction_callback)
+		buttons["action_buy"].disabled = true
+		buttons["action_buy"].text = "Not Enough Funds"
+	create_button("action_auction", "Auction", "C", auction_callback)
 
-# create build,sell,mortgage,ungorgae,trade,end_turn buttons
 func show_turn_actions(callbacks: Dictionary, is_liquidation: bool = false):
 	clear_buttons()
-	create_button("build", "Invest Funds", "F", callbacks.build)
-	create_button("sell", "Take Back Funds", "S", callbacks.sell)
-	create_button("mortgage", "Mortgage", "M", callbacks.mortgage)
-	create_button("unmortgage", "Unmortgage", "U", callbacks.unmortgage)
-	create_button("trade", "Trade", "T", callbacks.trade)
+	create_button("action_build", "Invest Funds", "A", callbacks.build)
+	create_button("action_sell", "Take Back Funds", "S", callbacks.sell)
+	create_button("action_mortgage", "Mortgage", "Z", callbacks.mortgage)
+	create_button("action_unmortgage", "Unmortgage", "C", callbacks.unmortgage)
+	create_button("action_trade", "Trade", "X", callbacks.trade)
+	
 	var end_label = "Give Up (Bankrupt)" if is_liquidation else "End Turn"
-	create_button("end_turn", end_label, "Enter", callbacks.end_turn)
+	create_button("action_end_turn", end_label, "Space", callbacks.end_turn)
 
-#create buttons when in jail
 func show_jail_buttons(pay_callback, card_callback, roll_callback, can_pay, has_card):
 	clear_buttons()
-	create_button("jail_roll", "Roll for Doubles", "R", roll_callback)
-	if has_card: create_button("jail_card", "Use Humanities Pass", "C", card_callback)
-	create_button("jail_pay", "Pay $50 Fine", "P", pay_callback)
+	create_button("action_jail_roll", "Roll for Doubles", "Space", roll_callback)
+	if has_card: 
+		create_button("action_jail_card", "Use Humanities Pass", "C", card_callback)
+	create_button("action_jail_pay", "Pay $50 Fine", "X", pay_callback)
 	if not can_pay:
-		buttons["jail_pay"].disabled = true
-		buttons["jail_pay"].text = "Can't Afford Fine"
+		buttons["action_jail_pay"].disabled = true
+		buttons["action_jail_pay"].text = "Can't Afford Fine"
 
 #creates auction panel with functionality
 func show_auction_panel(player, property, current_bid, highest_bidder, bid_callback:Callable, fold_callback:Callable):
@@ -164,7 +190,7 @@ func show_auction_panel(player, property, current_bid, highest_bidder, bid_callb
 	plus50.pressed.connect(func(): _quick_bid(50))
 	plus100.pressed.connect(func(): _quick_bid(100))
 	plus500.pressed.connect(func(): _quick_bid(500))
-
+	bid_button.grab_focus()
 
 #shows tile data
 func show_property_details(tile, library_money= 0):

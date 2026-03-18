@@ -100,8 +100,9 @@ func start_turn():
 
 #roll die
 func _input(event):
-	if event.is_action_pressed("ui_accept") and game_state == GameState.WAITING_ROLL:
-		if not players[current_player].is_in_jail: _roll_pressed()
+	if event.is_action_pressed("action_roll") and game_state == GameState.WAITING_ROLL:
+			if not players[current_player].is_in_jail: 
+				_roll_pressed()
 
 #handle die roll with camera movement
 func _roll_pressed():
