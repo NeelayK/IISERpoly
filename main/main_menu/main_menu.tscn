@@ -13,9 +13,10 @@ script = ExtResource("1_q6wqb")
 
 [node name="Background" type="Node3D" parent="." unique_id=1570874607]
 
-[node name="UI" type="CanvasLayer" parent="." unique_id=548160782]
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=548160782]
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI" unique_id=14419477]
+[node name="MainPanel" type="VBoxContainer" parent="UILayer" unique_id=14419477]
+visible = false
 custom_minimum_size = Vector2(300, 300)
 anchors_preset = 8
 anchor_left = 0.5
@@ -31,22 +32,23 @@ grow_vertical = 2
 size_flags_horizontal = 4
 alignment = 1
 
-[node name="PlayButton" type="Button" parent="UI/VBoxContainer" unique_id=2060311267]
+[node name="PlayBtn" type="Button" parent="UILayer/MainPanel" unique_id=2060311267]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Play"
 
-[node name="SettingsButton" type="Button" parent="UI/VBoxContainer" unique_id=579172893]
+[node name="SettingsBtn" type="Button" parent="UILayer/MainPanel" unique_id=579172893]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Settings"
 
-[node name="QuitButton" type="Button" parent="UI/VBoxContainer" unique_id=1779389027]
+[node name="QuitBtn" type="Button" parent="UILayer/MainPanel" unique_id=1779389027]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Quit"
 
-[node name="SettingsPanel" type="PanelContainer" parent="UI" unique_id=465760267]
+[node name="SettingsPanel" type="PanelContainer" parent="UILayer" unique_id=465760267]
+visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -59,85 +61,149 @@ offset_bottom = 277.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="UI/SettingsPanel" unique_id=1414007921]
+[node name="VBox" type="VBoxContainer" parent="UILayer/SettingsPanel" unique_id=1414007921]
 layout_mode = 2
 theme_override_constants/separation = 30
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/SettingsPanel/VBox" unique_id=1993788988]
+[node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox" unique_id=1993788988]
 layout_mode = 2
 text = "Settings"
 horizontal_alignment = 1
 
-[node name="Display" type="HBoxContainer" parent="UI/SettingsPanel/VBox" unique_id=1264725577]
+[node name="Display" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=1264725577]
 layout_mode = 2
 theme_override_constants/separation = 300
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/SettingsPanel/VBox/Display" unique_id=1468412471]
+[node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox/Display" unique_id=1468412471]
 layout_mode = 2
 text = "Display Mode"
 horizontal_alignment = 1
 
-[node name="DisplayModeButton" type="OptionButton" parent="UI/SettingsPanel/VBox/Display" unique_id=1560145853]
+[node name="DisplayModeButton" type="OptionButton" parent="UILayer/SettingsPanel/VBox/Display" unique_id=1560145853]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
-[node name="Resolution" type="HBoxContainer" parent="UI/SettingsPanel/VBox" unique_id=1365892403]
+[node name="Resolution" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=1365892403]
 layout_mode = 2
 theme_override_constants/separation = 322
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/SettingsPanel/VBox/Resolution" unique_id=1672462032]
+[node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox/Resolution" unique_id=1672462032]
 layout_mode = 2
 text = "Resolution"
 horizontal_alignment = 1
 
-[node name="Resolution" type="OptionButton" parent="UI/SettingsPanel/VBox/Resolution" unique_id=1546809953]
+[node name="Resolution" type="OptionButton" parent="UILayer/SettingsPanel/VBox/Resolution" unique_id=1546809953]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
-[node name="MasterVolume" type="HBoxContainer" parent="UI/SettingsPanel/VBox" unique_id=386934083]
+[node name="MasterVolume" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=386934083]
 layout_mode = 2
 theme_override_constants/separation = 322
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/SettingsPanel/VBox/MasterVolume" unique_id=693699169]
+[node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox/MasterVolume" unique_id=693699169]
 layout_mode = 2
 text = "MasterVolume"
 horizontal_alignment = 1
 
-[node name="MasterVolume" type="HSlider" parent="UI/SettingsPanel/VBox/MasterVolume" unique_id=491991526]
+[node name="MasterVolume" type="HSlider" parent="UILayer/SettingsPanel/VBox/MasterVolume" unique_id=491991526]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 
-[node name="SFX Volume" type="HBoxContainer" parent="UI/SettingsPanel/VBox" unique_id=1889538040]
+[node name="SFX Volume" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=1889538040]
 layout_mode = 2
 theme_override_constants/separation = 410
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/SettingsPanel/VBox/SFX Volume" unique_id=1475592066]
+[node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox/SFX Volume" unique_id=1475592066]
 layout_mode = 2
 text = "SFX"
 horizontal_alignment = 1
 
-[node name="MasterVolume" type="HSlider" parent="UI/SettingsPanel/VBox/SFX Volume" unique_id=458405303]
+[node name="MasterVolume" type="HSlider" parent="UILayer/SettingsPanel/VBox/SFX Volume" unique_id=458405303]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 
-[node name="HBox" type="HBoxContainer" parent="UI/SettingsPanel/VBox" unique_id=780591383]
+[node name="HBox" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=780591383]
 custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 alignment = 1
 
-[node name="ApplyBtn" type="Button" parent="UI/SettingsPanel/VBox/HBox" unique_id=1845486433]
+[node name="ApplyBtn" type="Button" parent="UILayer/SettingsPanel/VBox/HBox" unique_id=1845486433]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Apply"
 
-[node name="BackBtn" type="Button" parent="UI/SettingsPanel/VBox/HBox" unique_id=477837169]
+[node name="BackBtn" type="Button" parent="UILayer/SettingsPanel/VBox/HBox" unique_id=477837169]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Back"
+
+[node name="PlaySetupPanel" type="PanelContainer" parent="UILayer" unique_id=592952764]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -476.0
+offset_top = -277.0
+offset_right = 476.0
+offset_bottom = 277.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="UILayer/PlaySetupPanel" unique_id=1947011742]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Label" type="Label" parent="UILayer/PlaySetupPanel/VBox" unique_id=1760574937]
+layout_mode = 2
+text = "Player Setup"
+horizontal_alignment = 1
+
+[node name="PlayerList" type="VBoxContainer" parent="UILayer/PlaySetupPanel/VBox" unique_id=1737812638]
+layout_mode = 2
+
+[node name="HBox1" type="HBoxContainer" parent="UILayer/PlaySetupPanel/VBox" unique_id=565743979]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+
+[node name="AddPlayerBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox1" unique_id=669870895]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Add Player"
+
+[node name="RemPlayerBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox1" unique_id=576936552]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Remove Player"
+
+[node name="HBox" type="HBoxContainer" parent="UILayer/PlaySetupPanel/VBox" unique_id=260604414]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+
+[node name="StartGameBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox" unique_id=1413053142]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Start"
+
+[node name="BackBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox" unique_id=350346956]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

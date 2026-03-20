@@ -49,11 +49,13 @@ signal trade_started(player)
 @onready var pause_menu = $PauseMenu
 @onready var resume_btn = $PauseMenu/VBoxContainer/Resume
 @onready var quit_btn = $PauseMenu/VBoxContainer/Quit
+@onready var speed_up = $SpeedUp
 @onready var pause_icon_btn = $PauseButton
 
 var panels = []
 var buttons = {}
 var is_mobile:bool = false
+
 
 #initial setup (bid and trade sliders)
 func _ready():
@@ -67,7 +69,7 @@ func _ready():
 	confirm_trade_btn.pressed.connect(func():trade_accepted.emit())
 	cancel_trade_btn.pressed.connect(func():trade_cancelled.emit())
 	pause_menu.hide()
-	
+	speed_up.pressed.connect(change_time)
 	# Connect Pause Buttons
 	resume_btn.pressed.connect(_on_resume_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
@@ -235,13 +237,12 @@ func show_property_details(tile, library_money= 0):
 		if current_level==1:
 			lbl.add_theme_color_override("font_color", Color.YELLOW)
 			lbl.text = ">> " + lbl.text + " <<"
-			
+		elif current_level==2:
+			lbl.add_theme_color_override("font_color", Color.YELLOW)
+			lbl.text = ">> " + lbl.text + " <<"
 		rent_list.add_child(lbl)
 		var lbl2 = Label.new()
 		lbl2.text = "10x roll"
-		if current_level==2:
-			lbl.add_theme_color_override("font_color", Color.YELLOW)
-			lbl.text = ">> " + lbl.text + " <<"
 		rent_list.add_child(lbl2)
 	
 	elif tile.tile_type == BoardData.TileType.CORNER:
@@ -311,7 +312,7 @@ func show_target_selector(players: Array, current_idx: int, instruction_text: St
 			continue
 		
 		var btn = Button.new()
-		btn.text = "Swap with " + players[i].player_name
+		btn.text = players[i].player_name
 		btn.pressed.connect(func(): 
 			$VictimPanel.visible = false
 			target_selected.emit(i)
@@ -470,3 +471,16 @@ func _on_resume_pressed():
 func _on_quit_pressed():
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://main/main_menu/main_menu.tscn")
+
+func _input(event):
+	if not get_tree().paused:
+		if event.is_action_pressed("action_end_turn"):
+			_on_accept_button_pressed()
+			
+func change_time():
+	if Engine.time_scale == 1.5:
+		Engine.time_scale = 3
+		speed_up.text = "x2"
+	else:
+		Engine.time_scale = 1.5
+		speed_up.text = "x1"

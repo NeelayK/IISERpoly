@@ -8,6 +8,8 @@ var gc : Node3D
 #region Card Data
 
 const chance_cards := [
+	{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
+	{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
 	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
 	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
 	{"text": "Director catches you for not walking on the footpath. Go back 3 spaces.", "type": "move", "value": -3},
@@ -15,7 +17,7 @@ const chance_cards := [
 	{"text": "You are caught misusing the water filter. Pay a fine of 50.", "type": "pay", "value": 50},
 	{"text": "Ishya celebrations begin! Advance to the Indoor Stadium.", "type": "move_to", "target": 11},
 	{"text": "The Director participates in a sports fest. Advance to the Volleyball Court.", "type": "move_to", "target": 8},
-	{"text": "You are hit by a football! Advance to GO.", "type": "move_to", "target": 0},
+
 	{"text": "Class cancelled! Take an extra turn.", "type": "extra_turn"},
 	{"text": "UPI payment system is down. Pay 30 in cash.", "type": "pay", "value": 30},
 	{"text": "Floor WiFi is down. Go back to CDH 2.", "type": "move_to", "target": 18},
@@ -161,10 +163,17 @@ func handle_draw_card(player, is_chance):
 			gc.show_default_actions()
 			
 		"extra_turn":
-			# Set flag so turn restarts at end of current phase
 			gc.rolled_doubles = true 
 			gc.show_default_actions()
 			
+		"skip_turn":
+			player.skip_turn = true
+			gc.show_default_actions()
+			
+		"skip_other_turn":
+			gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
+			var target_idx = await gc.ui.target_selected
+			_execute_skip_turn(gc.players[target_idx])
 		_: 
 			gc.show_default_actions()
 
@@ -174,6 +183,10 @@ func _execute_money_swap(p1, p2):
 	p1.money = p2.money
 	p2.money = temp_money
 	gc.ui.update_ui()
+	gc.show_default_actions()
+
+func _execute_skip_turn(player):
+	player.skip_turn = true
 	gc.show_default_actions()
 
 #highlights properties for SWAP_STATE

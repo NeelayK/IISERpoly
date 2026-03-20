@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://m7v8ywws75re"]
+
+[node name="PlayerSetupRow" type="HBoxContainer" unique_id=1958966330]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 64.0
+grow_horizontal = 2
+alignment = 1
+
+[node name="NameInput" type="LineEdit" parent="." unique_id=1966007494]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Player Name"
+
+[node name="TypeSelect" type="OptionButton" parent="." unique_id=1442817741]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="ShinySelect" type="OptionButton" parent="." unique_id=1553070667]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="AISelect" type="OptionButton" parent="." unique_id=2139287958]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="ColorSelect" type="OptionButton" parent="." unique_id=225301879]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="FigurineView" type="SubViewportContainer" parent="." unique_id=1320218107]
+layout_mode = 2
+
+[node name="SubViewport" type="SubViewport" parent="FigurineView" unique_id=321202701]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(64, 64)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="FigurineView/SubViewport" unique_id=1809153783]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8648659, 2.695256)
+
+[node name="FigurineMesh" type="MeshInstance3D" parent="FigurineView/SubViewport" unique_id=270928338]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="FigurineView/SubViewport" unique_id=1956392614]
+transform = Transform3D(0.63189405, 0.4449741, -0.6345927, 0, 0.8187715, 0.57411957, 0.77505475, -0.36278275, 0.51737684, 0, 0, 0)

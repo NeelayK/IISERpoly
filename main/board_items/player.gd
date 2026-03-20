@@ -9,6 +9,8 @@ signal passed_go
 var negative_dice := false
 var is_in_jail := false
 var jail_turns := 0
+var is_ai := false
+var skip_turn = false
 var jail_free_cards := 0
 var is_bankrupt := false
 var player_name = ""

@@ -11,23 +11,15 @@ extends Node3D
 @onready var card_manager = $CardManager
 
 #Constants
-const PLAYER_COUNT := 2
+var  PLAYER_COUNT = GameConfig.player_data.size()
 const JAIL_INDEX := 10
 const JAIL_FINE := 50
-const MAX_JAIL_TURNS := 3
-const PLAYER_CONFIG = [
-	{"name": "Player 1", "model": preload("res://assets/players/Art.obj")},
-	{"name": "Player 2", "model": preload("res://assets/players/Knight.obj")},
-	{"name": "Player 3", "model": preload("res://assets/players/Beaker.obj")},
-	{"name": "Player 4", "model": preload("res://assets/players/Guitar.obj")},
-	{"name": "Player 5", "model": preload("res://assets/players/Rocket.obj")},
-	{"name": "Player 6", "model": preload("res://assets/players/Wolf.obj")}
-] 
-
+const PLAYER_SCALE = 0.3
+const MAX_JAIL_TURNS := 4
 enum GameState { 
 	WAITING_ROLL, PLAYER_MOVING, PROPERTY_DECISION, TURN_ACTIONS, 
 	AUCTION, SELECTING_TILE, LIQUIDATION, 
-	SWAP_SELECT_PLAYER, SWAP_PROPERTIES, STEAL_PROPERTY, TRADING 
+	SWAP_SELECT_PLAYER, SWAP_PROPERTIES, STEAL_PROPERTY, TRADING, SKIP_OTHER_TURN 
 }
 
 #variables
@@ -52,6 +44,7 @@ var is_reviewing_trade := false
 func _ready():
 	await get_tree().process_frame
 	
+	Engine.time_scale = 1.5
 	# Setup Sub-Managers
 	auction_manager.setup(ui)
 	auction_manager.auction_finished.connect(_on_auction_finished)
@@ -60,28 +53,66 @@ func _ready():
 	
 	ui.player_hovered.connect(_on_player_ui_hovered)
 	ui.player_unhovered.connect(_on_player_ui_unhovered)
+	
 	tiles = board_state.get_tiles()
-	for t in tiles: t.tile_clicked.connect(_on_tile_clicked)
+	for t in tiles: 
+		t.tile_clicked.connect(_on_tile_clicked)
+	
+	# Sequence is important: spawn -> tell UI -> then start turn
 	spawn_players()
 	ui.setup_players(players)
+	
 	dice_controller.connect("dice_result", _on_dice_result)
 	ui.trade_accepted.connect(_on_trade_button_pressed)
 	ui.trade_cancelled.connect(_cancel_trade)
 	ui.trade_started.connect(func(player): start_trade_with(player))
-	start_turn()
+	
+	# Only start if we actually have players!
+	if players.size() > 0:
+		start_turn()
+	else:
+		push_error("No players found in GameConfig. Did you come from the Main Menu?")
 
 #function to spawn players with global position
 func spawn_players():
-	for i in range(PLAYER_COUNT):
-		var data = PLAYER_CONFIG[i]
-		var p = player_scene.instantiate()
-		add_child(p)
-		p.get_child(0).mesh = data["model"]
-		p.get_child(0).scale = Vector3(0.3, 0.3, 0.3)
-		p.player_name = data["name"]
-		p.global_position = tiles[0].global_position + Vector3(i * 0.6, 0.1, 0)
-		p.connect("passed_go",ui.update_ui)
-		players.append(p)
+	players.clear() 
+	var actual_count = GameConfig.player_data.size()
+
+	for i in range(actual_count):
+		var config = GameConfig.player_data[i]
+		var new_player = player_scene.instantiate() 
+		
+		# Always add to tree before setting global_position
+		add_child(new_player)
+		
+		new_player.player_name = config["name"]
+		new_player.is_ai = config["is_ai"]
+		
+		var player_mesh_instance = new_player.get_node("MeshInstance3D")
+		player_mesh_instance.mesh = config["model"]
+		player_mesh_instance.scale = Vector3(PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE)
+		
+		# --- Create a Brand New Material Instance ---
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = config["color"]
+		
+		# Apply the preset chosen in the menu
+		if config["is_metal"]:
+			mat.metallic = 1.0
+			mat.roughness = 0.2
+		else:
+			mat.metallic = 0.0
+			mat.roughness = 0.45
+			
+		player_mesh_instance.material_override = mat
+		# ---------------------------------------------
+		
+		new_player.global_position = tiles[0].global_position + Vector3(i * 0.6, 0.1, 0)
+		new_player.passed_go.connect(ui.update_ui)
+		
+		players.append(new_player)
+	
+	print("Spawned ", players.size(), " players with custom materials.")
 
 #state to waiting roll with jail check
 func start_turn():
@@ -90,6 +121,11 @@ func start_turn():
 	if player.is_bankrupt:
 		_end_turn()
 		return
+	if player.skip_turn:
+		player.skip_turn = false
+		_end_turn()
+		return
+		
 	ui.update_turn_display(String(player.player_name) + "'s Turn ")
 	if player.is_in_jail:
 		var can_pay = player.money >= JAIL_FINE
@@ -212,7 +248,7 @@ func _handle_jail_roll(player, die1, die2):
 #resolve tile
 func resolve_tile(player):
 	var tile = tiles[player.current_tile]
-	ui.show_property_details(tile)
+	ui.show_property_details(tile,library_reward)
 	if player.current_tile == 30:
 		send_to_jail(player)
 		return
@@ -266,7 +302,7 @@ func _buy_property():
 	player.properties.append(tile)
 	tile.tile_owner = player
 	ui.update_ui()
-	ui.show_property_details(tile)
+	ui.show_property_details(tile,library_reward)
 	show_default_actions()
 
 #show default actions
@@ -314,13 +350,13 @@ func setup_tile_selection(mode: String, color: Color):
 			t.set_highlight(true, color)
 
 func _on_tile_clicked(tile):
-	ui.show_property_details(tile)
+	ui.show_property_details(tile,library_reward)
 	var player = players[current_player]
 	if game_state == GameState.SELECTING_TILE:
 		if property_manager.is_valid_for_action(tile, current_action_mode, player, tiles):
 			property_manager.execute_action(tile, current_action_mode, player)
 			
-			ui.show_property_details(tile)
+			ui.show_property_details(tile,library_reward)
 			ui.update_ui()
 			for t in tiles: t.set_highlight(false)
 			game_state = GameState.TURN_ACTIONS
