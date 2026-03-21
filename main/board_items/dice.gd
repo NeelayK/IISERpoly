@@ -6,28 +6,29 @@ signal roll_finished(value)
 var target_pos: Vector3 = Vector3.ZERO
 var rolling = false
 var stable_frames = 0 
+var roll_timer = 0.0
+var is_finalizing = false 
 
 var needs_teleport = false
 var teleport_pos = Vector3.ZERO
 
-#Face values
 var face_values = {
 	Vector3.UP: 6, Vector3.DOWN: 5,
 	Vector3.LEFT: 3, Vector3.RIGHT: 1,
 	Vector3.FORWARD: 2, Vector3.BACK: 4
 }
 
-#roll steup
 func roll(start_pos: Vector3, final_target_pos: Vector3):
 	target_pos = final_target_pos
 	teleport_pos = start_pos
+	is_finalizing = false 
+	roll_timer = 0.0     
 	freeze = false
 	sleeping = false 
 	needs_teleport = true
 	rolling = true
 	stable_frames = 0
 
-#calls everytime whenever roll, applies forces, finalizes roll when stable
 func _integrate_forces(state):
 	if needs_teleport:
 		state.transform.origin = teleport_pos
@@ -39,7 +40,10 @@ func _integrate_forces(state):
 		needs_teleport = false
 		return
 		
-	if not rolling: return
+	if not rolling or is_finalizing: return
+	
+	roll_timer += state.step
+	
 	var dir = (target_pos - state.transform.origin)
 	dir.y = 0 
 	var dist = dir.length()
@@ -50,28 +54,31 @@ func _integrate_forces(state):
 
 	if state.linear_velocity.length() < 0.2 and state.angular_velocity.length() < 0.2:
 		stable_frames += 1
-		if stable_frames > 20:
-			call_deferred("finalize_roll") 
 	else:
 		stable_frames = 0
 
-#called on idle time after stabilization and locks in location
+	if (stable_frames > 20 or roll_timer > 3.0) and not is_finalizing:
+		is_finalizing = true
+		call_deferred("finalize_roll") 
+
 func finalize_roll():
-	if not rolling: return
 	rolling = false
 	freeze = true 
+	
+	# Smoothly move to the perfect center and snap rotation
 	var tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "global_position", target_pos, 0.3)
+	tween.tween_property(self, "global_position", target_pos, 0.5)
+	
 	var snapped_rot = Vector3(
 		round(rotation_degrees.x / 90.0) * 90.0,
 		round(rotation_degrees.y / 90.0) * 90.0,
 		round(rotation_degrees.z / 90.0) * 90.0
 	)
-	tween.tween_property(self, "rotation_degrees", snapped_rot, 0.3)
+	tween.tween_property(self, "rotation_degrees", snapped_rot, 0.5)
+	
 	await tween.finished
 	emit_signal("roll_finished", get_top_face())
 
-#helper to calculate top_face
 func get_top_face():
 	var best_dot = -1.0
 	var best_face = 1

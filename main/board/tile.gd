@@ -8,6 +8,8 @@ const FONT_SIZE_MULTIPLIER = 1.5
 const LABEL_HEIGHT := 0.105
 const TILE_SIZE := Vector3(1.25, 0.2, 2.0)
 const CORNER_SIZE := Vector3(2.0, 0.2, 2.0)
+var original_y: float = 0.0
+var highlight_tween: Tween
 
 @onready var base := $Base
 @onready var property_strip := $PropertyStrip
@@ -24,6 +26,7 @@ var is_mortgaged := false
 
 #tile initializatin
 func _ready():
+	original_y = position.y
 	update_tile_shape()
 	create_tile_labels()
 
@@ -124,15 +127,30 @@ func spawn_coin(index: int, is_investment: bool):
 	coin.global_position = property_strip.global_position + Vector3(0, spawn_y, 0) + random_offset
 	coin.scale = Vector3(1,1,1) if is_investment else Vector3(0.8, 0.8, 0.8)
 
-#highlights tile
-func set_highlight(active: bool, glow_color := Color.WHITE):
-	var mat = base.material_override as StandardMaterial3D
-	if not mat: return
-	mat.emission_enabled = active
-	mat.emission = glow_color
-	mat.emission_energy_multiplier = 1.5 if active else 0.0
 
 #emits signal when clicked (tile_clicked)
 func _on_area_3d_input_event(_camera, event, _position, _normal, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		tile_clicked.emit(self)
+
+
+func set_highlight(active: bool, glow_color := Color(1.0, 0.85, 0.5)):
+	if highlight_tween and highlight_tween.is_running():
+		highlight_tween.kill()
+	highlight_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	var target_y = original_y + (0.025 if active else 0.0)
+	highlight_tween.tween_property(self, "position:y", target_y, 0.3)
+	var mat = base.material_override as StandardMaterial3D
+	if mat:
+		mat.emission_enabled = true
+		mat.emission = glow_color
+		var target_energy = 0.35 if active else 0.0 
+		highlight_tween.tween_property(mat, "emission_energy_multiplier", target_energy, 0.3)
+
+	var players = get_tree().get_nodes_in_group("players")
+	for p in players:
+		var dist = Vector2(p.global_position.x, p.global_position.z).distance_to(Vector2(global_position.x, global_position.z))
+		if dist < 0.8: 
+			var parent_global_y = get_parent().global_position.y if get_parent() else 0.0
+			var p_target_y = parent_global_y + target_y
+			highlight_tween.tween_property(p, "global_position:y", p_target_y, 0.3)

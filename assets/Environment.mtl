@@ -1,27 +1,37 @@
 # Blender 5.0.0 MTL File: 'None'
 # www.blender.org
 
-newmtl Cieling
+newmtl Material.001
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
+map_Kd C:/Users/neela/Downloads/Poliigon_BrickWallReclaimed_8320(1)/2K/Poliigon_BrickWallReclaimed_8320_BaseColor.jpg
 
-newmtl Floor
+newmtl Material.002
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
+map_Kd C:/Users/neela/Downloads/Poliigon_ConcreteWorn_8690/2K/Poliigon_ConcreteWorn_8690_BaseColor.jpg
 
-newmtl Walls
+newmtl Material.003
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/neela/Downloads/Poliigon_WoodFloorAsh_4186/2K/Poliigon_WoodFloorAsh_4186_BaseColor.jpg
+
+newmtl Material.004
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000

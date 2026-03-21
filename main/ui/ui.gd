@@ -478,9 +478,9 @@ func _input(event):
 			_on_accept_button_pressed()
 			
 func change_time():
-	if Engine.time_scale == 1.5:
-		Engine.time_scale = 3
+	if Engine.time_scale == 1:
+		Engine.time_scale = 2
 		speed_up.text = "x2"
 	else:
-		Engine.time_scale = 1.5
+		Engine.time_scale = 1
 		speed_up.text = "x1"

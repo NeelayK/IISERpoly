@@ -97,6 +97,7 @@ func _apply_settings():
 	var base_height = 720.0
 	var current_height = pending_settings.res.y
 	var new_scale = current_height / base_height
+	GameConfig.new_scale =  new_scale
 	get_tree().root.content_scale_factor = new_scale
 	print("Settings Applied and UI Rescaled to: ", new_scale)
 

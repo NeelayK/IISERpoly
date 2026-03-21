@@ -1,45 +1,75 @@
 [gd_scene format=3 uid="uid://cn4sqssoex48h"]
 
+[ext_resource type="Script" uid="uid://cnv3d6w7ctol0" path="res://main/ui/game.gd" id="1_8nvx8"]
 [ext_resource type="Script" uid="uid://c6n7rj58sx6sw" path="res://main/board/board_setup.gd" id="1_ey7ds"]
 [ext_resource type="PackedScene" uid="uid://ddowb8y14hb8f" path="res://main/board/tile.tscn" id="2_514y6"]
 [ext_resource type="Script" uid="uid://t7a83a20bydn" path="res://main/board_items/dice_manager.gd" id="3_6d5ub"]
 [ext_resource type="Script" uid="uid://y1v1yfpxwe2y" path="res://main/board/board_state.gd" id="3_xyq2n"]
 [ext_resource type="PackedScene" uid="uid://d0gtlpkjl2ysl" path="res://main/board_items/dice.tscn" id="4_nyh1f"]
-[ext_resource type="ArrayMesh" uid="uid://ogerk227ym3y" path="res://assets/Environment.obj" id="5_hckit"]
+[ext_resource type="ArrayMesh" uid="uid://c4dpb65edbiwr" path="res://assets/Environment.obj" id="5_hckit"]
 [ext_resource type="Script" uid="uid://pun3mtk0ai35" path="res://main/game_controller/game_controller.gd" id="5_lrx66"]
-[ext_resource type="Texture2D" uid="uid://b84jxh2fskrkr" path="res://materials/Floor/Poliigon_WoodFloorAsh_4186_BaseColor.jpg" id="6_a20sp"]
 [ext_resource type="PackedScene" uid="uid://bvppo81bfjnr3" path="res://main/board_items/player.tscn" id="6_iph2q"]
 [ext_resource type="Script" uid="uid://ca3r4bqeum6d4" path="res://main/game_controller/auction_manager.gd" id="8_wcq3i"]
 [ext_resource type="Script" uid="uid://dfy7ak7bawpqf" path="res://main/game_controller/property_manager.gd" id="9_4ijfq"]
 [ext_resource type="Script" uid="uid://cve7iud4b7ck" path="res://main/board/card_manager.gd" id="10_3lxql"]
-[ext_resource type="Texture2D" uid="uid://onubyq73qnty" path="res://materials/HDRI/pergola_walkway_2k.hdr" id="10_xug3m"]
-[ext_resource type="VoxelGIData" uid="uid://ui023dxxb73f" path="res://materials/BakedLight/game.VoxelGI_data.res" id="11_a20sp"]
+[ext_resource type="Texture2D" uid="uid://h5f32cf7db8h" path="res://materials/Textures/Chair_metal.png" id="12_kwtg8"]
+[ext_resource type="Texture2D" uid="uid://dajsgm2vmbb0i" path="res://materials/Textures/Brick.jpg" id="13_8nvx8"]
+[ext_resource type="Texture2D" uid="uid://bv68n4hcl7q3v" path="res://materials/Textures/Wood.jpg" id="15_021v2"]
 [ext_resource type="Script" uid="uid://bfkxeaydd1sc1" path="res://main/ui/camera_rig.gd" id="15_sveyw"]
 [ext_resource type="PackedScene" uid="uid://dfgdebdcat2yf" path="res://main/ui/auction_panel.tscn" id="15_wcq3i"]
 [ext_resource type="Script" uid="uid://2mhklwmigp76" path="res://main/ui/ui.gd" id="15_xug3m"]
+[ext_resource type="ArrayMesh" uid="uid://7w7svcx2uvtw" path="res://assets/Chair.obj" id="16_fvged"]
 [ext_resource type="PackedScene" uid="uid://dspm7kjffpwnl" path="res://main/ui/player_hud.tscn" id="16_sveyw"]
+[ext_resource type="Texture2D" uid="uid://d3hb32lyq6mo8" path="res://materials/Dice/Poliigon_PlasticMoldWorn_7486_BaseColor.jpg" id="16_x7q1m"]
+[ext_resource type="Texture2D" uid="uid://xllxyeon5grd" path="res://materials/Dice/Poliigon_PlasticMoldWorn_7486_Roughness.jpg" id="17_021v2"]
+[ext_resource type="Texture2D" uid="uid://belicf3d8d8rj" path="res://materials/Textures/Chair_wood.png" id="17_k0k1m"]
 [ext_resource type="PackedScene" uid="uid://bwfrpoqso0ifx" path="res://main/ui/action_button.tscn" id="17_wcq3i"]
+[ext_resource type="Texture2D" uid="uid://da2lxtjpsj1u6" path="res://materials/HDRI/hdri.hdr" id="18_8nvx8"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sveyw"]
-albedo_texture = ExtResource("6_a20sp")
-roughness = 0.64
-uv1_scale = Vector3(10, 10, 10)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kwtg8"]
+albedo_color = Color(0, 0, 0, 1)
+albedo_texture = ExtResource("16_x7q1m")
+roughness_texture = ExtResource("17_021v2")
+uv1_scale = Vector3(3, 3, 3)
 
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_wcq3i"]
-panorama = ExtResource("10_xug3m")
+[sub_resource type="BoxMesh" id="BoxMesh_kwtg8"]
+size = Vector3(15.3, 0.2, 15.3)
 
-[sub_resource type="Sky" id="Sky_4ijfq"]
-sky_material = SubResource("PanoramaSkyMaterial_wcq3i")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_phdud"]
+albedo_texture = ExtResource("17_k0k1m")
 
-[sub_resource type="Environment" id="Environment_ge21c"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gr4op"]
+albedo_texture = ExtResource("12_kwtg8")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8nvx8"]
+albedo_texture = ExtResource("12_kwtg8")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x7q1m"]
+albedo_texture = ExtResource("13_8nvx8")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_021v2"]
+albedo_texture = ExtResource("15_021v2")
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_x7q1m"]
+panorama = ExtResource("18_8nvx8")
+
+[sub_resource type="Sky" id="Sky_021v2"]
+sky_material = SubResource("PanoramaSkyMaterial_x7q1m")
+
+[sub_resource type="Environment" id="Environment_fvged"]
 background_mode = 2
 background_energy_multiplier = 0.5
-sky = SubResource("Sky_4ijfq")
-fog_density = 0.1
+sky = SubResource("Sky_021v2")
+ambient_light_source = 3
+ambient_light_energy = 0.6
+tonemap_mode = 3
+ssao_enabled = true
+ssao_intensity = 1.5
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_hckit"]
 
 [node name="Game" type="Node3D" unique_id=1361872469]
+script = ExtResource("1_8nvx8")
 
 [node name="Board" type="Node3D" parent="." unique_id=154058985]
 script = ExtResource("1_ey7ds")
@@ -73,31 +103,37 @@ script = ExtResource("10_3lxql")
 
 [node name="Environment" type="Node3D" parent="." unique_id=1011231608]
 
-[node name="Floor" type="MeshInstance3D" parent="Environment" unique_id=103589620]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 2.9691858, -0.29820642, -0.91806555)
+[node name="Board" type="MeshInstance3D" parent="Environment" unique_id=1852065267]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15097189, 0)
+material_override = SubResource("StandardMaterial3D_kwtg8")
+mesh = SubResource("BoxMesh_kwtg8")
+
+[node name="Chairs" type="MeshInstance3D" parent="Environment" unique_id=643399585]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, -44.73642, -24.485, 20.55471)
+mesh = ExtResource("16_fvged")
+surface_material_override/0 = SubResource("StandardMaterial3D_phdud")
+surface_material_override/1 = SubResource("StandardMaterial3D_gr4op")
+
+[node name="Chairs2" type="MeshInstance3D" parent="Environment" unique_id=981688723]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, -24.311184, -24.485, 20.55471)
 mesh = ExtResource("5_hckit")
-surface_material_override/1 = SubResource("StandardMaterial3D_sveyw")
+surface_material_override/0 = SubResource("StandardMaterial3D_8nvx8")
+surface_material_override/1 = SubResource("StandardMaterial3D_x7q1m")
+surface_material_override/3 = SubResource("StandardMaterial3D_021v2")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=1723087591]
-environment = SubResource("Environment_ge21c")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=106667225]
-transform = Transform3D(0.120916635, 0.74438953, 0.65670645, 6.0801435e-09, -0.6615606, 0.7498918, 0.9926626, -0.09067435, -0.079993635, 0, 2.1704535, 0)
-light_bake_mode = 1
-shadow_enabled = true
+environment = SubResource("Environment_fvged")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Environment" unique_id=1591738255]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/StaticBody3D" unique_id=1796737934]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.298, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.037137747, 0)
 shape = SubResource("WorldBoundaryShape3D_hckit")
 debug_color = Color(0.98805624, 0, 0.31137228, 0.41960785)
 
-[node name="VoxelGI" type="VoxelGI" parent="." unique_id=1917217326]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86865234, 19.732178, -2.6537476)
-subdiv = 0
-size = Vector3(46.63965, 40.464355, 44.447144)
-data = ExtResource("11_a20sp")
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=116492737]
+transform = Transform3D(0.15203944, 0.5280303, 0.83550465, -0.2931884, -0.78318965, 0.54832, 0.94388795, -0.32832655, 0.035736725, 0, 6.098528, 0)
+shadow_enabled = true
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1600656523 node_paths=PackedStringArray("CardPanel")]
 script = ExtResource("15_xug3m")
@@ -369,6 +405,7 @@ vertical_alignment = 1
 
 [node name="PauseMenu" type="Control" parent="UI" unique_id=28996167]
 process_mode = 3
+visible = false
 custom_minimum_size = Vector2(150, 200)
 layout_mode = 3
 anchors_preset = 8
@@ -401,15 +438,17 @@ text = "Quit"
 
 [node name="PauseButton" type="Button" parent="UI" unique_id=203390594]
 custom_minimum_size = Vector2(50, 50)
-offset_right = 8.0
-offset_bottom = 8.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 52.0
+offset_bottom = 52.0
 text = "||"
 
 [node name="SpeedUp" type="Button" parent="UI" unique_id=801177699]
 custom_minimum_size = Vector2(50, 50)
-offset_left = 52.0
+offset_left = 54.0
 offset_top = 2.0
-offset_right = 102.0
+offset_right = 104.0
 offset_bottom = 52.0
 text = "x1"
 

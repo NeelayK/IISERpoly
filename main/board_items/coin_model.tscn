@@ -6,6 +6,11 @@
 height = 0.055
 radius = 0.2
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1qh4p"]
+albedo_color = Color(0.95222896, 0.5845242, 0.34460157, 1)
+metallic = 1.0
+roughness = 0.4
+
 [node name="CoinModel" type="RigidBody3D" unique_id=216991414]
 transform = Transform3D(1, 0, 0, 0, -1, 1.509958e-07, 0, -1.509958e-07, -1, 0, 0, 0)
 continuous_cd = true
@@ -19,3 +24,4 @@ shape = SubResource("CylinderShape3D_xij7u")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=565175139]
 transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
 mesh = ExtResource("1_xij7u")
+surface_material_override/0 = SubResource("StandardMaterial3D_1qh4p")

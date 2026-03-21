@@ -43,8 +43,6 @@ var is_reviewing_trade := false
 #INITIALIZATION: setup children, connect ui functions
 func _ready():
 	await get_tree().process_frame
-	
-	Engine.time_scale = 1.5
 	# Setup Sub-Managers
 	auction_manager.setup(ui)
 	auction_manager.auction_finished.connect(_on_auction_finished)
@@ -57,8 +55,6 @@ func _ready():
 	tiles = board_state.get_tiles()
 	for t in tiles: 
 		t.tile_clicked.connect(_on_tile_clicked)
-	
-	# Sequence is important: spawn -> tell UI -> then start turn
 	spawn_players()
 	ui.setup_players(players)
 	
@@ -67,52 +63,59 @@ func _ready():
 	ui.trade_cancelled.connect(_cancel_trade)
 	ui.trade_started.connect(func(player): start_trade_with(player))
 	
-	# Only start if we actually have players!
 	if players.size() > 0:
 		start_turn()
 	else:
 		push_error("No players found in GameConfig. Did you come from the Main Menu?")
 
+
+# In game_controller.gd
+
+func _on_player_move_finished():
+	for tile_idx in range(tiles.size()):
+		_rearrange_players_on_tile(tile_idx)
+
+func _rearrange_players_on_tile(tile_idx: int):
+	var players_on_this_tile = []
+	for p in players:
+		if p.current_tile == tile_idx:
+			players_on_this_tile.append(p)
+	
+	var count = players_on_this_tile.size()
+	var tile_pos = tiles[tile_idx].global_position
+	for i in range(count):
+		var offset = Vector3.ZERO
+		if count > 1:
+			var radius = 0.35
+			var angle = i * (TAU / count)
+			offset = Vector3(cos(angle) * radius, 0, sin(angle) * radius)
+		players_on_this_tile[i].relocate_on_tile(tile_pos, offset)
+
 #function to spawn players with global position
 func spawn_players():
 	players.clear() 
 	var actual_count = GameConfig.player_data.size()
-
 	for i in range(actual_count):
 		var config = GameConfig.player_data[i]
 		var new_player = player_scene.instantiate() 
 		
-		# Always add to tree before setting global_position
 		add_child(new_player)
+		new_player.player_index = i 
 		
 		new_player.player_name = config["name"]
 		new_player.is_ai = config["is_ai"]
 		
+		new_player.move_finished.connect(_on_player_move_finished)
 		var player_mesh_instance = new_player.get_node("MeshInstance3D")
 		player_mesh_instance.mesh = config["model"]
-		player_mesh_instance.scale = Vector3(PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE)
-		
-		# --- Create a Brand New Material Instance ---
 		var mat = StandardMaterial3D.new()
 		mat.albedo_color = config["color"]
-		
-		# Apply the preset chosen in the menu
-		if config["is_metal"]:
-			mat.metallic = 1.0
-			mat.roughness = 0.2
-		else:
-			mat.metallic = 0.0
-			mat.roughness = 0.45
-			
 		player_mesh_instance.material_override = mat
-		# ---------------------------------------------
-		
-		new_player.global_position = tiles[0].global_position + Vector3(i * 0.6, 0.1, 0)
+		var start_tile = tiles[0]
+		new_player.global_position = start_tile.global_position + Vector3(0, 0.1, 0) + new_player.get_visual_offset()
+		_on_player_move_finished()
 		new_player.passed_go.connect(ui.update_ui)
-		
 		players.append(new_player)
-	
-	print("Spawned ", players.size(), " players with custom materials.")
 
 #state to waiting roll with jail check
 func start_turn():
@@ -189,6 +192,7 @@ func _end_turn():
 	rolled_doubles = false
 	current_player = (current_player + 1) % players.size()
 	var search_count = 0
+	for t in tiles: t.set_highlight(false)
 	while search_count < players.size():
 		if not players[current_player].is_bankrupt:
 			start_turn()
@@ -411,10 +415,10 @@ func check_liquidation(player):
 		var current_pos = players[current_player].global_position
 		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
 		ui.show_turn_actions({
-			"build": setup_tile_selection.bind("build", Color.GREEN),
-			"sell": setup_tile_selection.bind("sell", Color.RED),
-			"mortgage": setup_tile_selection.bind("mortgage", Color.ORANGE),
-			"unmortgage": setup_tile_selection.bind("unmortgage", Color.YELLOW),
+			"build": setup_tile_selection.bind("build", Color(0.611, 0.993, 0.0, 1.0)),
+			"sell": setup_tile_selection.bind("sell", Color(1.0, 0.812, 0.85, 1.0)),
+			"mortgage": setup_tile_selection.bind("mortgage", Color(0.841, 0.857, 1.0, 1.0)),
+			"unmortgage": setup_tile_selection.bind("unmortgage", Color(1.0, 0.85, 0.5)),
 			"trade": func(): ui.trade_selector(players,current_player), 
 			"end_turn": _declare_bankruptcy 
 		}, true) 
@@ -431,6 +435,7 @@ func _declare_bankruptcy():
 	player.is_bankrupt = true
 	player.properties.clear()
 	player.visible = false 
+	for t in tiles: t.set_highlight(false)
 	ui.update_ui()
 	if not _check_win_condition():
 		_end_turn()
@@ -455,7 +460,7 @@ func _on_player_ui_hovered(player_index: int):
 	if game_state == GameState.SELECTING_TILE: return 
 	var hovered_player = players[player_index]
 	for t in tiles:
-		if t.tile_owner == hovered_player: t.set_highlight(true, Color.CYAN)
+		if t.tile_owner == hovered_player: t.set_highlight(true, Color(0.016, 1.0, 0.914, 1.0))
 
 func _on_player_ui_unhovered():
 	if game_state == GameState.SELECTING_TILE: return

@@ -1,6 +1,7 @@
 extends Node
 
 var player_data = [] 
+var new_scale = 1.0
 
 const MSB_WHITE = Color("ccc8bfff") 
 const COLOR_LIGHT_BLUE = Color("#9FD6E5")

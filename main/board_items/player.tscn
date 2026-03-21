@@ -4,6 +4,7 @@
 [ext_resource type="Material" uid="uid://d3w7yktapkp0i" path="res://materials/Player/Player_Material.tres" id="2_apucr"]
 
 [node name="Player" type="Node3D" unique_id=75860781]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 script = ExtResource("1_1e681")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1526212578]

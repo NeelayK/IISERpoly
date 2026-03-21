@@ -15,8 +15,10 @@ albedo_color = Color(0, 0, 0, 1)
 roughness = 0.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ea2f"]
-metallic_specular = 0.2
+albedo_color = Color(0.93200094, 0.9213092, 0.9071311, 1)
+metallic = 1.0
 roughness_texture = ExtResource("6_gwedm")
+roughness_texture_channel = 4
 uv1_scale = Vector3(2, 2, 2)
 
 [node name="Dice" type="RigidBody3D" unique_id=1688145858]
@@ -26,9 +28,10 @@ angular_damp = 0.5
 script = ExtResource("1_vmqw7")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1328229620]
+visible = false
 shape = SubResource("BoxShape3D_4ea2f")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=715361706]
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=715361706]
 mesh = ExtResource("2_y438w")
 surface_material_override/0 = SubResource("StandardMaterial3D_xqd7s")
 surface_material_override/1 = SubResource("StandardMaterial3D_4ea2f")
