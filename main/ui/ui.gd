@@ -215,6 +215,7 @@ func show_property_details(tile, library_money= 0):
 		$PropertyDetailPanel/Owner.text = ""
 		
 		var info_lbl = Label.new()
+		info_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		info_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		if tile.tile_type == BoardData.TileType.CHANCE:
 			info_lbl.text = "Chance: Land here to draw a random event card."
@@ -233,15 +234,15 @@ func show_property_details(tile, library_money= 0):
 	if tile.tile_type == BoardData.TileType.UTILITY:
 		current_level = get_owner_count(tile)
 		var lbl = Label.new()
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.text = "4x roll"
 		if current_level==1:
 			lbl.add_theme_color_override("font_color", Color.YELLOW)
-			lbl.text = ">> " + lbl.text + " <<"
 		elif current_level==2:
 			lbl.add_theme_color_override("font_color", Color.YELLOW)
-			lbl.text = ">> " + lbl.text + " <<"
 		rent_list.add_child(lbl)
 		var lbl2 = Label.new()
+		lbl2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl2.text = "10x roll"
 		rent_list.add_child(lbl2)
 	
@@ -262,10 +263,10 @@ func show_property_details(tile, library_money= 0):
 
 	for i in range(rents.size()):
 		var lbl = Label.new()
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.text = "Level " + str(i) + ": $" + str(rents[i])
 		if i == current_level:
-			lbl.add_theme_color_override("font_color", Color.YELLOW)
-			lbl.text = ">> " + lbl.text + " <<"
+			lbl.add_theme_color_override("font_color", Color.CRIMSON)
 		rent_list.add_child(lbl)
 
 #show card ui
@@ -273,7 +274,7 @@ func show_drawn_card(card_data: Dictionary, is_chance: bool):
 	CardPanel.visible = true
 	title.text = "CHANCE" if is_chance else "PROJECT FUNDS"
 	desc.text = card_data["text"]
-	CardPanel.modulate = Color(1, 0.5, 0) if is_chance else Color(0.2, 0.6, 1)
+	CardPanel.modulate = Color.PLUM if is_chance else Color.LIGHT_CORAL
 
 #helper functions
 

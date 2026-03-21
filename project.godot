@@ -26,6 +26,11 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+theme/default_font_hinting=2
+theme/custom_font="uid://dvj0gf8kx64v0"
+
 [input]
 
 zoom_in={

@@ -25,6 +25,7 @@
 [ext_resource type="Texture2D" uid="uid://belicf3d8d8rj" path="res://materials/Textures/Chair_wood.png" id="17_k0k1m"]
 [ext_resource type="PackedScene" uid="uid://bwfrpoqso0ifx" path="res://main/ui/action_button.tscn" id="17_wcq3i"]
 [ext_resource type="Texture2D" uid="uid://da2lxtjpsj1u6" path="res://materials/HDRI/hdri.hdr" id="18_8nvx8"]
+[ext_resource type="StyleBox" uid="uid://cv7n13qwfbo24" path="res://materials/themes/panel_theme.tres" id="25_x7q1m"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kwtg8"]
 albedo_color = Color(0, 0, 0, 1)
@@ -67,6 +68,8 @@ ssao_enabled = true
 ssao_intensity = 1.5
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_hckit"]
+
+[sub_resource type="Theme" id="Theme_021v2"]
 
 [node name="Game" type="Node3D" unique_id=1361872469]
 script = ExtResource("1_8nvx8")
@@ -152,12 +155,20 @@ anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
+theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/CardPanel" unique_id=162409822]
+custom_minimum_size = Vector2(350, 0)
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -15.0
+offset_top = -93.5
+offset_right = 15.0
+offset_bottom = 93.5
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
@@ -183,6 +194,7 @@ offset_left = 29.0
 offset_top = 182.0
 offset_right = -940.0
 offset_bottom = -199.0
+theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="PlayerPanels" type="MarginContainer" parent="UI" unique_id=701558278]
 anchors_preset = 15
@@ -212,21 +224,26 @@ layout_mode = 2
 
 [node name="PropertyDetailPanel" type="Panel" parent="UI" unique_id=1575429712]
 visible = false
-offset_left = 1086.0
-offset_top = 283.0
-offset_right = 1253.0
-offset_bottom = 540.0
+offset_left = 1100.0
+offset_top = 263.0
+offset_right = 1267.0
+offset_bottom = 520.0
+theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="Title" type="Label" parent="UI/PropertyDetailPanel" unique_id=1902027091]
 layout_mode = 0
+offset_top = 10.0
 offset_right = 167.0
-offset_bottom = 23.0
+offset_bottom = 46.0
+theme = SubResource("Theme_021v2")
+horizontal_alignment = 1
 
 [node name="Owner" type="Label" parent="UI/PropertyDetailPanel" unique_id=1962449548]
 layout_mode = 0
-offset_top = 30.0
+offset_top = 33.0
 offset_right = 167.0
-offset_bottom = 53.0
+offset_bottom = 63.0
+horizontal_alignment = 1
 autowrap_mode = 2
 
 [node name="RentList" type="VBoxContainer" parent="UI/PropertyDetailPanel" unique_id=1180503058]
@@ -237,6 +254,7 @@ anchor_bottom = 1.0
 offset_top = 65.0
 grow_horizontal = 2
 grow_vertical = 2
+alignment = 1
 
 [node name="VictimPanel" type="Panel" parent="UI" unique_id=458887243]
 visible = false
@@ -252,6 +270,8 @@ offset_right = 20.0
 offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_vertical = 3
+theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="Instructions" type="Label" parent="UI/VictimPanel" unique_id=1118560122]
 layout_mode = 1
@@ -281,11 +301,12 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -200.0
-offset_top = -261.0
+offset_top = -288.0
 offset_right = 200.0
-offset_bottom = -61.0
+offset_bottom = 66.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/TradePanel" unique_id=1738274468]
 layout_mode = 1
@@ -297,7 +318,8 @@ grow_vertical = 2
 
 [node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer" unique_id=2004868437]
 layout_mode = 2
-text = "Trade Offer"
+text = "
+Trade Offer"
 horizontal_alignment = 1
 
 [node name="ScrollContainer" type="ScrollContainer" parent="UI/TradePanel/VBoxContainer" unique_id=354814544]
@@ -442,7 +464,7 @@ offset_left = 2.0
 offset_top = 2.0
 offset_right = 52.0
 offset_bottom = 52.0
-text = "||"
+text = "| |"
 
 [node name="SpeedUp" type="Button" parent="UI" unique_id=801177699]
 custom_minimum_size = Vector2(50, 50)
