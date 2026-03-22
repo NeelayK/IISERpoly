@@ -138,7 +138,7 @@ func set_highlight(active: bool, glow_color := Color(1.0, 0.85, 0.5)):
 	if highlight_tween and highlight_tween.is_running():
 		highlight_tween.kill()
 	highlight_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	var target_y = original_y + (0.025 if active else 0.0)
+	var target_y = original_y + (0.05 if active else 0.0)
 	highlight_tween.tween_property(self, "position:y", target_y, 0.3)
 	var mat = base.material_override as StandardMaterial3D
 	if mat:
@@ -152,5 +152,5 @@ func set_highlight(active: bool, glow_color := Color(1.0, 0.85, 0.5)):
 		var dist = Vector2(p.global_position.x, p.global_position.z).distance_to(Vector2(global_position.x, global_position.z))
 		if dist < 0.8: 
 			var parent_global_y = get_parent().global_position.y if get_parent() else 0.0
-			var p_target_y = parent_global_y + target_y
+			var p_target_y = parent_global_y
 			highlight_tween.tween_property(p, "global_position:y", p_target_y, 0.3)

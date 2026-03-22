@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://bwpbbu28naodh" path="res://main/board_items/dice.gd" id="1_vmqw7"]
 [ext_resource type="ArrayMesh" uid="uid://brj7qamkb6e32" path="res://assets/dice/dice.obj" id="2_y438w"]
-[ext_resource type="Texture2D" uid="uid://xllxyeon5grd" path="res://materials/Dice/Poliigon_PlasticMoldWorn_7486_Roughness.jpg" id="6_gwedm"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_vmqw7"]
 friction = 1.2
@@ -15,9 +14,10 @@ albedo_color = Color(0, 0, 0, 1)
 roughness = 0.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ea2f"]
-albedo_color = Color(0.93200094, 0.9213092, 0.9071311, 1)
+diffuse_mode = 1
+albedo_color = Color(0.8894838, 0.8862409, 0.8818242, 1)
 metallic = 1.0
-roughness_texture = ExtResource("6_gwedm")
+roughness = 0.24
 roughness_texture_channel = 4
 uv1_scale = Vector3(2, 2, 2)
 

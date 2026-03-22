@@ -28,8 +28,9 @@
 [ext_resource type="StyleBox" uid="uid://cv7n13qwfbo24" path="res://materials/themes/panel_theme.tres" id="25_x7q1m"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kwtg8"]
-albedo_color = Color(0, 0, 0, 1)
+albedo_color = Color(0.2469503, 0.2469503, 0.2469503, 1)
 albedo_texture = ExtResource("16_x7q1m")
+roughness = 0.27
 roughness_texture = ExtResource("17_021v2")
 uv1_scale = Vector3(3, 3, 3)
 
@@ -64,6 +65,7 @@ sky = SubResource("Sky_021v2")
 ambient_light_source = 3
 ambient_light_energy = 0.6
 tonemap_mode = 3
+ssr_enabled = true
 ssao_enabled = true
 ssao_intensity = 1.5
 
@@ -137,6 +139,11 @@ debug_color = Color(0.98805624, 0, 0.31137228, 0.41960785)
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=116492737]
 transform = Transform3D(0.15203944, 0.5280303, 0.83550465, -0.2931884, -0.78318965, 0.54832, 0.94388795, -0.32832655, 0.035736725, 0, 6.098528, 0)
 shadow_enabled = true
+
+[node name="ReflectionProbe" type="ReflectionProbe" parent="Environment" unique_id=1036095399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4750366, 0)
+size = Vector3(20, 5.5809326, 20)
+interior = true
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1600656523 node_paths=PackedStringArray("CardPanel")]
 script = ExtResource("15_xug3m")
