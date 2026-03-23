@@ -2,9 +2,10 @@ extends Node
 
 var player_data = [] 
 var new_scale = 1.0
+var is_training = false
 
-const MSB_WHITE = Color("ccc8bfff") 
-const COLOR_LIGHT_BLUE = Color("#9FD6E5")
+const COLOR_WHITE = Color("ccc8bfff") 
+const COLOR_LIGHT_BLUE = Color("ee6141ff")
 const COLOR_PINK = Color("#E68AAE")  
 const COLOR_ORANGE = Color("#F2A65A")     
 const COLOR_RED = Color("#D95757")     
@@ -14,7 +15,7 @@ const COLOR_DARK_BLUE = Color("#3B4F8A")
 const COLOR_DEFAULT = Color("#F3EAD7")     
 
 const ALLOWED_COLORS = {
-	"MSB White": MSB_WHITE,
+	"White": COLOR_WHITE,
 	"Light Blue": COLOR_LIGHT_BLUE,
 	"Pink": COLOR_PINK,
 	"Orange": COLOR_ORANGE,

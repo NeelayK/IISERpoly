@@ -20,13 +20,15 @@ var pan_offset := Vector3(0, 3.0, 4.0)
 var yaw_target := 0.0
 var yaw_current := 0.0
 
-var cursor_pos := Vector2.ZERO
-
 func _ready():
-	cursor_pos = get_viewport().size / 2.0
+	if GameConfig.is_training:
+		set_process(false)       # Stops _process(delta) from running
+		set_process_input(false) # Stops _input(event) from running
+		return    
 
 #switch focus to dice while maintaing yaw
 func show_dice(dice_center := Vector3.ZERO):
+	if GameConfig.is_training: return
 	pan_mode = false
 	tracked_player = null
 	is_transitioning = true
@@ -45,6 +47,7 @@ func show_dice(dice_center := Vector3.ZERO):
 
 #switch focus to player
 func look_at_player(player):
+	if GameConfig.is_training: return
 	pan_mode = false
 	tracked_player = player
 	is_transitioning = true

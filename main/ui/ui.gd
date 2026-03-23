@@ -98,12 +98,10 @@ func update_ui():
 		
 		if player.is_bankrupt:
 			money_label.text = "BANKRUPT"
-			money_label.add_theme_color_override("font_color", Color.RED)
-			# Optional: Dim the whole panel
-			entry.panel.modulate = Color(0.39, 0.519, 0.61, 0.8) 
+			money_label.add_theme_color_override("font_color", Color.LIME_GREEN)
+			entry.panel.modulate = Color(0.278, 0.525, 0.714, 0.8) 
 		else:
 			money_label.text = "$" + str(player.money)
-			# Reset color if they aren't bankrupt (in case of game resets)
 			money_label.remove_theme_color_override("font_color")
 			entry.panel.modulate = Color.WHITE
 
@@ -237,9 +235,9 @@ func show_property_details(tile, library_money= 0):
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.text = "4x roll"
 		if current_level==1:
-			lbl.add_theme_color_override("font_color", Color.YELLOW)
+			lbl.add_theme_color_override("font_color", Color.LIME_GREEN)
 		elif current_level==2:
-			lbl.add_theme_color_override("font_color", Color.YELLOW)
+			lbl.add_theme_color_override("font_color", Color.CRIMSON)
 		rent_list.add_child(lbl)
 		var lbl2 = Label.new()
 		lbl2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -265,8 +263,8 @@ func show_property_details(tile, library_money= 0):
 		var lbl = Label.new()
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.text = "Level " + str(i) + ": $" + str(rents[i])
-		if i == current_level:
-			lbl.add_theme_color_override("font_color", Color.CRIMSON)
+		if i == current_level and tile.tile_owner:
+			lbl.add_theme_color_override("font_color", Color.LIME_GREEN)
 		rent_list.add_child(lbl)
 
 #show card ui

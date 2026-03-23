@@ -133,8 +133,8 @@ func _on_area_3d_input_event(_camera, event, _position, _normal, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		tile_clicked.emit(self)
 
-
 func set_highlight(active: bool, glow_color := Color(1.0, 0.85, 0.5)):
+	
 	if highlight_tween and highlight_tween.is_running():
 		highlight_tween.kill()
 	highlight_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)

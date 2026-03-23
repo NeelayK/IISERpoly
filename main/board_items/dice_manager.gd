@@ -23,7 +23,12 @@ func _ready():
 
 func roll_dice():
 	if is_rolling: return
-	
+	if GameConfig.is_training:
+		var r1 = randi_range(1, 6)
+		var r2 = randi_range(1, 6)
+		dice_result.emit(r1, r2)
+		return
+
 	is_rolling = true
 	results.clear()
 	

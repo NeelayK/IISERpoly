@@ -189,7 +189,7 @@ const TILES : Array[Dictionary] = [
 	"mortgage":140},
 
 	# --- SIDE 4 ---
-	{"name":"Go To Humanities","type":TileType.CORNER,"icon":ICON_GO_TO,"desc":"You can read..."},
+	{"name":"Go To\nHumanities","type":TileType.CORNER,"icon":ICON_GO_TO,"desc":"You can read..."},
 
 	{"name":"MSB","type":TileType.PROPERTY,
 	"price":300,"color":"Green",
@@ -239,17 +239,4 @@ const property_rules := {
 	"Yellow": {"investment": 150},
 	"Green": {"investment": 200},
 	"Dark Blue": {"investment": 200}
-}
-
-#Cafe charge
-var cafe_charge = {
-	1: 25,
-	2: 50,
-	3: 100,
-	4: 200
-}
-#utility multipler
-var utility_rules = {
-	one_owned_multiplier = 4,
-	two_owned_multiplier = 10
 }
