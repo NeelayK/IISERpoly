@@ -22,13 +22,8 @@ func _ready():
 	dice2.position = Vector3(0.7, 0.5, 0)
 
 func roll_dice():
+	print("roll_dice")
 	if is_rolling: return
-	if GameConfig.is_training:
-		var r1 = randi_range(1, 6)
-		var r2 = randi_range(1, 6)
-		dice_result.emit(r1, r2)
-		return
-
 	is_rolling = true
 	results.clear()
 	
@@ -39,6 +34,7 @@ func roll_dice():
 	dice2.roll(slot2, slot2)
 
 func _on_die_finished(value):
+	print("_on_die_finished")
 	results.append(value)
 	if results.size() == 2:
 		is_rolling = false

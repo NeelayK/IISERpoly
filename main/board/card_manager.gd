@@ -88,9 +88,8 @@ func handle_draw_card(player, is_chance):
 	gc.game_state = gc.GameState.TURN_ACTIONS
 	var card_list = chance_cards if is_chance else fund_cards
 	var card_data = card_list.pick_random()
-	if not player.is_ai or not GameConfig.is_training:
-		gc.ui.show_drawn_card(card_data, is_chance)
-		await gc.ui.card_accepted
+	gc.ui.show_drawn_card(card_data, is_chance)
+	await gc.ui.card_accepted
 	match card_data["type"]:
 		"negative_dice":
 			player.negative_dice = true
@@ -98,12 +97,8 @@ func handle_draw_card(player, is_chance):
 			
 		"swap_money":
 				var target_idx: int
-				if player.is_ai:
-					target_idx = player.get_node("AIBrain").choose_target_player(gc.players, "swap_money")
-				else:
-					gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
-					target_idx = await gc.ui.target_selected
-				
+				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
+				target_idx = await gc.ui.target_selected
 				_execute_money_swap(gc.players[gc.current_player], gc.players[target_idx])
 			
 		"swap_property":
@@ -179,11 +174,8 @@ func handle_draw_card(player, is_chance):
 			
 		"skip_other_turn":
 			var target_idx: int
-			if player.is_ai:
-				target_idx = player.get_node("AIBrain").choose_target_player(gc.players, "skip_other_turn")
-			else:
-				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
-				target_idx = await gc.ui.target_selected
+			gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
+			target_idx = await gc.ui.target_selected
 			_execute_skip_turn(gc.players[target_idx])
 		_: 
 			gc.show_default_actions()
@@ -268,11 +260,7 @@ func complete_action():
 
 	for t in gc.tiles: 
 		t.set_highlight(false)
-
-	if not GameConfig.is_training:
-		for t in gc.tiles: 
-			t.set_highlight(false)
-		gc.ui.hide_instruction()
+	gc.ui.hide_instruction()
 
 	gc.ui.update_ui()
 	gc.show_default_actions()
@@ -281,8 +269,7 @@ func complete_action():
 #setup for swap state
 func _start_property_swap():
 	var player = gc.players[gc.current_player]
-	if not GameConfig.is_training:
-		camera.enable_tabletop_pan(player.global_position)
+	camera.enable_tabletop_pan(player.global_position)
 	if player.properties.size() == 0:
 		print("You have no properties to swap.")
 		gc.show_default_actions()
@@ -302,30 +289,18 @@ func _start_property_swap():
 		gc.show_default_actions()
 		return
 
-	if player.is_ai:
-		var brain = player.get_node("AIBrain")
-		var pair = brain.choose_swap_pair(player.properties, gc.tiles)
-		gc.selected_own_tile = pair[0]
-		gc.selected_target_tile = pair[1]
-		complete_action() # Execute immediately
-	else:
-		gc.game_state = gc.GameState.SWAP_PROPERTIES
-		gc.selected_own_tile = null
-		gc.selected_target_tile = null
-		gc.ui.show_instruction("Select 1 of your properties and 1 target property.")
-		_update_swap_highlights()
+	gc.game_state = gc.GameState.SWAP_PROPERTIES
+	gc.selected_own_tile = null
+	gc.selected_target_tile = null
+	gc.ui.show_instruction("Select 1 of your properties and 1 target property.")
+	_update_swap_highlights()
 
 #setup for steal state
 func _start_property_steal():
 	var player = gc.players[gc.current_player]
-	if player.is_ai:
-		var brain = player.get_node("AIBrain")
-		gc.selected_target_tile = brain.choose_steal_target(gc.tiles)
-		complete_action()
-	else:
-		gc.game_state = gc.GameState.STEAL_PROPERTY
-		camera.enable_tabletop_pan(gc.players[gc.current_player].global_position)
-		gc.selected_own_tile = null
-		gc.selected_target_tile = null
-		gc.ui.show_instruction("Select a property to steal!")
-		_update_swap_highlights()
+	gc.game_state = gc.GameState.STEAL_PROPERTY
+	camera.enable_tabletop_pan(gc.players[gc.current_player].global_position)
+	gc.selected_own_tile = null
+	gc.selected_target_tile = null
+	gc.ui.show_instruction("Select a property to steal!")
+	_update_swap_highlights()

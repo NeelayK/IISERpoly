@@ -9,9 +9,6 @@ var player_row_scene = preload("res://main/main_menu/player_setup_row.tscn")
 var pending_settings = {"mode": DisplayServer.WINDOW_MODE_WINDOWED, "res": Vector2i(1280, 720)}
 
 func _ready():
-	if GameConfig.is_training:
-		_start_game()
-	else:
 		_show_panel(main_panel)
 		main_panel.get_node("PlayBtn").pressed.connect(func(): _show_panel(play_setup_panel))
 		main_panel.get_node("SettingsBtn").pressed.connect(func(): _show_panel(settings_panel))
@@ -36,6 +33,7 @@ func _ready():
 		
 		_add_player_row()
 		_add_player_row()
+		return
 
 func _process(delta):
 	for row in player_list.get_children():
@@ -94,7 +92,7 @@ func _apply_settings():
 		DisplayServer.window_set_size(pending_settings.res)
 		var current_screen = DisplayServer.window_get_current_screen()
 		var screen_size = DisplayServer.screen_get_size(current_screen)
-		var window_position = (screen_size / 2) - (pending_settings.res / 2)
+		var window_position = round((screen_size / 2.0) - (pending_settings.res / 2.0))
 		DisplayServer.window_set_position(window_position)
 
 	var base_height = 720.0
@@ -189,12 +187,15 @@ func _start_game():
 			"is_ai": row.get_node("AISelect").selected > 0,
 			"is_metal": row.get_node("ShinySelect").selected == 1
 		})
-	get_tree().change_scene_to_file("res://main/board_items/game.tscn")
+	call_deferred("_go_to_game_scene")
 	
 #remove last player row
 func _rem_player_row():
 	var rows = player_list.get_children()
 	if rows.size() > 2:
 		var last_row = rows[-1]
-		player_list.remove_child(last_row)
 		last_row.queue_free()
+
+
+func _go_to_game_scene():
+	get_tree().change_scene_to_file("res://main/board_items/game.tscn")

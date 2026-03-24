@@ -29,10 +29,6 @@ func get_visual_offset() -> Vector3:
 
 func relocate_on_tile(tile_global_pos: Vector3, offset: Vector3):
 	var final_pos = tile_global_pos + Vector3(0, 0.1, 0) + offset
-	
-	if GameConfig.is_training:
-		self.global_position = final_pos
-		return
 	var tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "global_position", final_pos, 0.25)
 
@@ -54,18 +50,6 @@ func move_steps(steps: int, board_tiles: Array):
 	if moving or steps == 0: return
 	moving = true
 	var direction = 1 if steps > 0 else -1
-	if GameConfig.is_training:
-		var prev_tile = current_tile
-		current_tile = (current_tile + steps + board_tiles.size()) % board_tiles.size()
-		
-		if direction == 1 and current_tile < prev_tile and not is_in_jail:
-			money += 200
-			passed_go.emit()
-			
-		self.global_position = board_tiles[current_tile].global_position + Vector3(0, 0.1, 0)
-		moving = false
-		move_finished.emit()
-		return
 	var absolute_steps = abs(steps)
 	var tile_count = board_tiles.size()
 

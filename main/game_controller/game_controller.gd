@@ -42,18 +42,6 @@ var is_reviewing_trade := false
 
 #INITIALIZATION: setup children, connect ui functions
 func _ready():
-	if GameConfig.is_training:
-		print("Training Mode Detected: Auto-generating AI players...")
-		GameConfig.player_data.clear()
-		for i in range(4):
-			GameConfig.player_data.append({
-				"name": "AI_Bot_" + str(i+1),
-				"color": GameConfig.ALLOWED_COLORS.keys()[i],
-				"model": GameConfig.FIGURINE_MESHES[0]["model"],
-				"is_ai": true,
-				"is_metal": false
-			})
-
 	await get_tree().process_frame
 	# Setup Sub-Managers
 	auction_manager.setup(ui)
@@ -78,7 +66,7 @@ func _ready():
 	if players.size() > 0:
 		start_turn()
 	else:
-		push_error("No players found in GameConfig. Did you come from the Main Menu?")
+		push_error("No players found in GameConfig.")
 
 
 # In game_controller.gd
@@ -115,12 +103,7 @@ func spawn_players():
 		new_player.player_index = i 
 		
 		new_player.player_name = config["name"]
-		new_player.is_ai = config["is_ai"]
-		if new_player.is_ai:
-			var brain = AIBrain.new()
-			brain.name = "AIBrain"
-			new_player.add_child(brain)
-		
+		new_player.is_ai = config["is_ai"]        
 		new_player.move_finished.connect(_on_player_move_finished)
 		var player_mesh_instance = new_player.get_node("MeshInstance3D")
 		player_mesh_instance.mesh = config["model"]
@@ -147,20 +130,6 @@ func start_turn():
 		return
 		
 	ui.update_turn_display(String(player.player_name) + "'s Turn ")
-	if player.is_ai:
-		var brain = player.get_node("AIBrain")
-		if player.is_in_jail:
-			var can_pay = player.money >= JAIL_FINE
-			var has_card = player.jail_free_cards > 0
-			var choice = brain.decide_jail_action(can_pay, has_card)
-			
-			match choice:
-				"pay": _pay_jail_fine()
-				"card": _use_jail_card()
-				"roll": _roll_pressed()
-		else:
-			_roll_pressed()
-		return
 	if player.is_in_jail:
 		var can_pay = player.money >= JAIL_FINE
 		var has_card = player.jail_free_cards > 0
@@ -188,6 +157,7 @@ func _roll_pressed():
 
 #handle camera movement to player with jail check, doubles, neg dice
 func _on_dice_result(die1, die2):
+	print("_on_dice_result")
 	latest_die_sum = abs(die1+die2)
 	var player = players[current_player]
 	if camera_rig.has_method("look_at_player"): camera_rig.look_at_player(player)
@@ -298,17 +268,7 @@ func resolve_tile(player):
 	if tile.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.CAFE, BoardData.TileType.UTILITY]:
 		if tile.tile_owner == null:
 			game_state = GameState.PROPERTY_DECISION
-			if player.is_ai:
-				var brain = player.get_node("AIBrain")
-				var price = tile.tile_data.get("price", 0)
-				var wants_to_buy = brain.decide_buy_property(tile, price, player.money)
-				
-				if wants_to_buy:
-					_buy_property()
-				else:
-					_start_auction()
-			else:
-				ui.show_property_buttons(_buy_property, _start_auction, player.money >= tile.tile_data.get("price", 0))
+			ui.show_property_buttons(_buy_property, _start_auction, player.money >= tile.tile_data.get("price", 0))
 		elif tile.tile_owner != player:
 			if player.next_rent_free:
 				print(player.player_name, " uses their Rent Free pass!")
@@ -342,6 +302,10 @@ func resolve_tile(player):
 func _buy_property():
 	var player = players[current_player]
 	var tile = tiles[player.current_tile]
+	var price = tile.tile_data.get("price", 0)
+	if price == 0: 
+		print("Error: Attempted to buy a tile with no price!")
+		return
 	player.money -= tile.tile_data.price
 	player.properties.append(tile)
 	tile.tile_owner = player
@@ -350,7 +314,6 @@ func _buy_property():
 	show_default_actions()
 
 #show default actions
-
 func show_default_actions(camera_pan: bool = true):
 	game_state = GameState.TURN_ACTIONS
 	var player = players[current_player]
@@ -369,19 +332,7 @@ func show_default_actions(camera_pan: bool = true):
 	if sellable.size() > 0: action_space["sell"] = sellable
 	if mortgageable.size() > 0: action_space["mortgage"] = mortgageable
 	if unmortgageable.size() > 0: action_space["unmortgage"] = unmortgageable
-	if player.is_ai:
-		var brain = player.get_node("AIBrain")
-		var state = brain.get_board_state(tiles)
-		var decision = brain.choose_turn_action(state, action_space)
-		
-		if decision.action == "end_turn":
-			_end_turn()
-		else:
-			property_manager.execute_action(decision.tile, decision.action, player)
-			show_default_actions(false) 
-		return
-
-	if camera_pan and not GameConfig.is_training:
+	if camera_pan:
 		var current_pos = player.global_position
 		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
 	ui.show_turn_actions({
@@ -491,20 +442,8 @@ func check_liquidation(player):
 			
 		if sellable.size() > 0: action_space["sell"] = sellable
 		if mortgageable.size() > 0: action_space["mortgage"] = mortgageable
-		if player.is_ai:
-			var brain = player.get_node("AIBrain")
-			var state = brain.get_board_state(tiles)
-			var decision = brain.choose_liquidation_action(state, action_space)
-			
-			if decision.action == "declare_bankruptcy":
-				_declare_bankruptcy()
-			else:
-				property_manager.execute_action(decision.tile, decision.action, player)
-				check_liquidation(player)
-			return
-		if not GameConfig.is_training:
-			var current_pos = players[current_player].global_position
-			camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
+		var current_pos = players[current_player].global_position
+		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
 		ui.show_turn_actions({
 			"build": setup_tile_selection.bind("build", Color(0.611, 0.993, 0.0, 1.0)),
 			"sell": setup_tile_selection.bind("sell", Color(1.0, 0.812, 0.85, 1.0)),
@@ -517,12 +456,8 @@ func check_liquidation(player):
 		show_default_actions()
 	if player.money < 0:
 		game_state = GameState.LIQUIDATION
-		if player.is_ai:
-			_declare_bankruptcy()
-			return
-		if not GameConfig.is_training:
-			var current_pos = players[current_player].global_position
-			camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
+		var current_pos = players[current_player].global_position
+		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
 			
 		ui.show_turn_actions({
 			"build": setup_tile_selection.bind("build", Color(0.611, 0.993, 0.0, 1.0)),
@@ -560,9 +495,6 @@ func _check_win_condition() -> bool:
 		ui.update_turn_display(active_players[0].player_name + " WINS!")
 		ui.clear_buttons()
 		print("Winner is: ", active_players[0].player_name)
-		if GameConfig.is_training:
-			get_tree().quit()
-		return true
 	return false
 	
 

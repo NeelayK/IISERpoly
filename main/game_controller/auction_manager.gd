@@ -41,16 +41,7 @@ func _process_turn(): #Continuous State Check for Auction
 
 	if bidding_player.money < minimum_bid:
 		fold_auction()
-		return
-	if GameConfig.is_training or bidding_player.is_ai:
-		var brain = bidding_player.get_node("AIBrain")
-		var chosen_bid = brain.decide_auction_bid(auction_property, current_bid) 
-		if chosen_bid >= minimum_bid:
-			place_bid(chosen_bid)
-		else:
-			fold_auction()
-		return
-	
+		return	
 	ui.show_auction_panel(bidding_player, auction_property, current_bid, highest_bidder, place_bid, fold_auction)
 
 func place_bid(amount: int): #Place Bid
