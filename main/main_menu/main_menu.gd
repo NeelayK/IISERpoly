@@ -9,30 +9,33 @@ var player_row_scene = preload("res://main/main_menu/player_setup_row.tscn")
 var pending_settings = {"mode": DisplayServer.WINDOW_MODE_WINDOWED, "res": Vector2i(1280, 720)}
 
 func _ready():
-	_show_panel(main_panel)
-	main_panel.get_node("PlayBtn").pressed.connect(func(): _show_panel(play_setup_panel))
-	main_panel.get_node("SettingsBtn").pressed.connect(func(): _show_panel(settings_panel))
-	main_panel.get_node("QuitBtn").pressed.connect(func(): get_tree().quit())
-	
-	var apply_btn = settings_panel.get_node("VBox/HBox/ApplyBtn")
-	var settings_back_btn = settings_panel.get_node("VBox/HBox/BackBtn")
-	apply_btn.pressed.connect(_apply_settings)
-	settings_back_btn.pressed.connect(func(): _show_panel(main_panel))
-	
-	_setup_settings_options()
-	
-	var add_player_btn = play_setup_panel.get_node("VBox/HBox1/AddPlayerBtn")
-	var rem_player_btn = play_setup_panel.get_node("VBox/HBox1/RemPlayerBtn")
-	var start_btn = play_setup_panel.get_node("VBox/HBox/StartGameBtn")
-	var setup_back_btn = play_setup_panel.get_node("VBox/HBox/BackBtn")
-	
-	add_player_btn.pressed.connect(_add_player_row)
-	rem_player_btn.pressed.connect(_rem_player_row)
-	start_btn.pressed.connect(_start_game)
-	setup_back_btn.pressed.connect(func(): _show_panel(main_panel))
-	
-	_add_player_row()
-	_add_player_row()
+	if GameConfig.is_training:
+		_start_game()
+	else:
+		_show_panel(main_panel)
+		main_panel.get_node("PlayBtn").pressed.connect(func(): _show_panel(play_setup_panel))
+		main_panel.get_node("SettingsBtn").pressed.connect(func(): _show_panel(settings_panel))
+		main_panel.get_node("QuitBtn").pressed.connect(func(): get_tree().quit())
+		
+		var apply_btn = settings_panel.get_node("VBox/HBox/ApplyBtn")
+		var settings_back_btn = settings_panel.get_node("VBox/HBox/BackBtn")
+		apply_btn.pressed.connect(_apply_settings)
+		settings_back_btn.pressed.connect(func(): _show_panel(main_panel))
+		
+		_setup_settings_options()
+		
+		var add_player_btn = play_setup_panel.get_node("VBox/HBox1/AddPlayerBtn")
+		var rem_player_btn = play_setup_panel.get_node("VBox/HBox1/RemPlayerBtn")
+		var start_btn = play_setup_panel.get_node("VBox/HBox/StartGameBtn")
+		var setup_back_btn = play_setup_panel.get_node("VBox/HBox/BackBtn")
+		
+		add_player_btn.pressed.connect(_add_player_row)
+		rem_player_btn.pressed.connect(_rem_player_row)
+		start_btn.pressed.connect(_start_game)
+		setup_back_btn.pressed.connect(func(): _show_panel(main_panel))
+		
+		_add_player_row()
+		_add_player_row()
 
 func _process(delta):
 	for row in player_list.get_children():
