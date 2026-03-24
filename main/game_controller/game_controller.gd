@@ -29,11 +29,12 @@ var latest_die_sum := 0
 var game_state = GameState.WAITING_ROLL
 var current_action_mode = ""
 var players = []
-var current_player = 0
+var current_player := 0
 var tiles = []
 var doubles_count = 0
-var rolled_doubles = false
-var library_reward = 0
+var rolled_doubles := false
+var game_started := false
+var library_reward := 0
 var is_reviewing_trade := false
 
 #------------------------------------
@@ -67,9 +68,8 @@ func _ready():
 		start_turn()
 	else:
 		push_error("No players found in GameConfig.")
-
-
-# In game_controller.gd
+	game_started = true
+	for t in tiles: t.set_highlight(false)
 
 func _on_player_move_finished():
 	for tile_idx in range(tiles.size()):
@@ -120,7 +120,6 @@ func spawn_players():
 func start_turn():
 	game_state = GameState.WAITING_ROLL
 	var player = players[current_player]
-	
 	if player.is_bankrupt:
 		_end_turn()
 		return
@@ -128,24 +127,55 @@ func start_turn():
 		player.skip_turn = false
 		_end_turn()
 		return
-		
 	ui.update_turn_display(String(player.player_name) + "'s Turn ")
 	if player.is_in_jail:
 		var can_pay = player.money >= JAIL_FINE
 		var has_card = player.jail_free_cards > 0
-		ui.show_jail_buttons(_pay_jail_fine, _use_jail_card, _roll_pressed, can_pay, has_card)
-	else:
-		ui.show_roll_button(_roll_pressed)
+		
+		# --- AI_BLOCK ---
+		if player.is_ai:
+			print("--- ", player.player_name, "'s Turn ---")
+			print("[AI] Status: In Jail. Options: Roll", (", Pay" if can_pay else ""), (", Use Card" if has_card else ""))
+			await get_tree().create_timer(1.0).timeout
+			if can_pay:
+				print("[AI] Decision: Paying Fine.")
+				_pay_jail_fine()
+			else:
+				print("[AI] Decision: Rolling.")
+				_roll_pressed()
+		# ---------------------
 
-#roll die
+		else:
+			ui.show_jail_buttons(_pay_jail_fine, _use_jail_card, _roll_pressed, can_pay, has_card)
+	else:
+		# --- AI_BLOCK ---
+		if player.is_ai:
+			print("--- ", player.player_name, "'s Turn ---")
+			print("[AI] Status: Normal. Options: Roll")
+			await get_tree().create_timer(1.0).timeout
+			print("[AI] Decision: Rolling.")
+			_roll_pressed()
+		# ---------------------
+		else:
+			ui.show_roll_button(_roll_pressed)
+
+
+#roll die/pause
 func _input(event):
-	if not get_tree().paused:
+	if not get_tree().paused and game_started:
+		var player = players[current_player]
+		if player.is_ai:
+			if event.is_action_pressed("action_pause"):
+				ui.toggle_pause()
+			return
+
 		if event.is_action_pressed("action_roll") and game_state == GameState.WAITING_ROLL:
-				if not players[current_player].is_in_jail: 
-					_roll_pressed()
-	if event.is_action_pressed("action_pause"):
-		ui.toggle_pause()
-		return
+			if not player.is_in_jail: 
+				_roll_pressed()
+				
+		if event.is_action_pressed("action_pause"):
+			ui.toggle_pause()
+			return
 
 #handle die roll with camera movement
 func _roll_pressed():
@@ -185,6 +215,7 @@ func _on_dice_result(die1, die2):
 
 #ends turn with jail check
 func _end_turn():
+	ui.clear_buttons()
 	var player = players[current_player]
 	if rolled_doubles and not player.is_bankrupt and not player.is_in_jail:
 		start_turn()
@@ -253,7 +284,8 @@ func _handle_jail_roll(player, die1, die2):
 #resolve tile
 func resolve_tile(player):
 	var tile = tiles[player.current_tile]
-	ui.show_property_details(tile,library_reward)
+	ui.show_property_details(tile, library_reward)
+	
 	if player.current_tile == 30:
 		send_to_jail(player)
 		return
@@ -268,7 +300,23 @@ func resolve_tile(player):
 	if tile.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.CAFE, BoardData.TileType.UTILITY]:
 		if tile.tile_owner == null:
 			game_state = GameState.PROPERTY_DECISION
-			ui.show_property_buttons(_buy_property, _start_auction, player.money >= tile.tile_data.get("price", 0))
+			var can_buy = player.money >= tile.tile_data.get("price", 0)
+			
+			# --- AI_BLOCK ---
+			if player.is_ai:
+				print("[AI] Landed on unowned property. Options: Buy, Auction")
+				await get_tree().create_timer(1.0).timeout
+				if can_buy:
+					print("[AI] Decision: Buying Property.")
+					_buy_property() 
+				else:
+					print("[AI] Decision: Not enough money. Passing.")
+					# Skipping auction for now to keep it simple
+					show_default_actions()
+			# --------------------
+			else:
+				ui.show_property_buttons(_buy_property, _start_auction, can_buy)
+				
 		elif tile.tile_owner != player:
 			if player.next_rent_free:
 				print(player.player_name, " uses their Rent Free pass!")
@@ -312,11 +360,23 @@ func _buy_property():
 	ui.update_ui()
 	ui.show_property_details(tile,library_reward)
 	show_default_actions()
+	tile.set_highlight(true, Color.GREEN)
+	await get_tree().create_timer(0.2).timeout
+	tile.set_highlight(false)
 
 #show default actions
 func show_default_actions(camera_pan: bool = true):
 	game_state = GameState.TURN_ACTIONS
 	var player = players[current_player]
+	
+	# --- AI_BLOCK ---
+	if player.is_ai:
+		print("[AI] Options: End Turn, Build, Sell, Mortgage, Trade")
+		await get_tree().create_timer(1.0).timeout
+		print("[AI] Decision: End Turn.")
+		_end_turn()
+		return
+	# -------------------------
 	var action_space = { "end_turn": [] }
 	var buildable = []
 	var sellable = []
@@ -432,6 +492,14 @@ func _on_tile_clicked(tile):
 func check_liquidation(player):
 	if player.money < 0:
 		game_state = GameState.LIQUIDATION
+		# --- AI_BLOCK ---
+		if player.is_ai:
+			print("[AI] Status: Bankrupt! Options: Sell, Mortgage, Give Up")
+			await get_tree().create_timer(1.0).timeout
+			print("[AI] Decision: Give Up (Bankrupt).")
+			_declare_bankruptcy()
+			return
+		# ----------------------------
 		var action_space = { "declare_bankruptcy": [] }
 		var sellable = []
 		var mortgageable = []

@@ -133,6 +133,12 @@ func _on_area_3d_input_event(_camera, event, _position, _normal, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		tile_clicked.emit(self)
 
+func _mouse_entered():
+	set_highlight(true,Color.BISQUE)
+
+func _mouse_exited():
+	set_highlight(false)
+
 func set_highlight(active: bool, glow_color := Color(1.0, 0.85, 0.5)):
 	
 	if highlight_tween and highlight_tween.is_running():

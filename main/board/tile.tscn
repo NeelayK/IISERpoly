@@ -28,3 +28,5 @@ debug_color = Color(0.8352941, 0, 0.3254902, 1)
 [node name="BuildingContainer" type="Node3D" parent="." unique_id=126373749]
 
 [connection signal="input_event" from="Selection" to="." method="_on_area_3d_input_event"]
+[connection signal="mouse_entered" from="Selection" to="." method="_mouse_entered"]
+[connection signal="mouse_exited" from="Selection" to="." method="_mouse_exited"]

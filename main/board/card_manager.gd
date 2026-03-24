@@ -297,7 +297,7 @@ func _start_property_swap():
 
 #setup for steal state
 func _start_property_steal():
-	var player = gc.players[gc.current_player]
+	#var player = gc.players[gc.current_player]
 	gc.game_state = gc.GameState.STEAL_PROPERTY
 	camera.enable_tabletop_pan(gc.players[gc.current_player].global_position)
 	gc.selected_own_tile = null
