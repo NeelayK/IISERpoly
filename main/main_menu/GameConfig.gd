@@ -4,7 +4,7 @@ var player_data = []
 var new_scale = 1.0
 
 const COLOR_WHITE = Color("ccc8bfff") 
-const COLOR_LIGHT_BLUE = Color("ee6141ff")
+const COLOR_LIGHT_BLUE = Color("479ecfff")
 const COLOR_PINK = Color("#E68AAE")  
 const COLOR_ORANGE = Color("#F2A65A")     
 const COLOR_RED = Color("#D95757")     

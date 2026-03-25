@@ -23,6 +23,7 @@ enum GameState {
 }
 
 #variables
+var turn_id: int = 0
 var selected_own_tile = null
 var selected_target_tile = null
 var latest_die_sum := 0
@@ -116,49 +117,68 @@ func spawn_players():
 		new_player.passed_go.connect(ui.update_ui)
 		players.append(new_player)
 
-#state to waiting roll with jail check
 func start_turn():
+	turn_id += 1
+	var current_turn_token = turn_id
+	
 	game_state = GameState.WAITING_ROLL
 	var player = players[current_player]
-	if player.is_bankrupt:
-		_end_turn()
-		return
-	if player.skip_turn:
-		player.skip_turn = false
-		_end_turn()
-		return
-	ui.update_turn_display(String(player.player_name) + "'s Turn ")
-	if player.is_in_jail:
-		var can_pay = player.money >= JAIL_FINE
-		var has_card = player.jail_free_cards > 0
-		
-		# --- AI_BLOCK ---
-		if player.is_ai:
-			print("--- ", player.player_name, "'s Turn ---")
-			print("[AI] Status: In Jail. Options: Roll", (", Pay" if can_pay else ""), (", Use Card" if has_card else ""))
-			await get_tree().create_timer(1.0).timeout
-			if can_pay:
-				print("[AI] Decision: Paying Fine.")
-				_pay_jail_fine()
-			else:
-				print("[AI] Decision: Rolling.")
-				_roll_pressed()
-		# ---------------------
+	
+	print("\n--- [LOG] Starting Turn ", turn_id, " for: ", player.player_name, " ---")
 
+	if player.is_bankrupt or player.skip_turn:
+		if player.skip_turn: player.skip_turn = false
+		_end_turn()
+		return
+		
+	ui.update_turn_display(String(player.player_name) + "'s Turn ")
+	
+	if player.is_ai:
+		await get_tree().create_timer(1.0).timeout
+		if current_turn_token != turn_id: return 
+		
+		if player.is_in_jail:
+			_handle_jail_turn(player)
 		else:
-			ui.show_jail_buttons(_pay_jail_fine, _use_jail_card, _roll_pressed, can_pay, has_card)
+			_handle_normal_turn(player)
 	else:
-		# --- AI_BLOCK ---
-		if player.is_ai:
-			print("--- ", player.player_name, "'s Turn ---")
-			print("[AI] Status: Normal. Options: Roll")
-			await get_tree().create_timer(1.0).timeout
-			print("[AI] Decision: Rolling.")
-			_roll_pressed()
-		# ---------------------
+		if player.is_in_jail:
+			var can_pay = player.money >= JAIL_FINE
+			var has_card = player.jail_free_cards > 0
+			ui.show_jail_buttons(_pay_jail_fine, _use_jail_card, _roll_pressed, can_pay, has_card)
 		else:
 			ui.show_roll_button(_roll_pressed)
+			
+func _handle_jail_turn(player):
+	var can_pay = player.money >= JAIL_FINE
+	var has_card = player.jail_free_cards > 0
+	
+	if player.is_ai:
+		print("[AI] Status: In Jail. Options: Roll, Pay, Card")
+		await get_tree().create_timer(1.0).timeout
+		if game_state != GameState.WAITING_ROLL or players[current_player] != player:
+			return
 
+		if player.jail_turns >= 2 and can_pay:
+			print("[AI] Decision: Paying Fine (Max turns reached).")
+			_pay_jail_fine()
+		else:
+			print("[AI] Decision: Rolling for Doubles.")
+			_roll_pressed()
+	else:
+		ui.show_jail_buttons(_pay_jail_fine, _use_jail_card, _roll_pressed, can_pay, has_card)
+
+func _handle_normal_turn(player):
+	if player.is_ai:
+		print("[AI] Status: Normal. Options: Roll")
+		await get_tree().create_timer(1.0).timeout
+		if game_state == GameState.WAITING_ROLL and players[current_player] == player:
+			print("[AI] Decision: Rolling Dice.")
+			_roll_pressed()
+		else:
+			print("[DEBUG] AI skip prevented: Game state changed during await.")
+	else:
+		ui.show_roll_button(_roll_pressed)
 
 #roll die/pause
 func _input(event):
@@ -187,11 +207,14 @@ func _roll_pressed():
 
 #handle camera movement to player with jail check, doubles, neg dice
 func _on_dice_result(die1, die2):
+	var dice_turn_token = turn_id
 	print("_on_dice_result")
 	latest_die_sum = abs(die1+die2)
 	var player = players[current_player]
 	if camera_rig.has_method("look_at_player"): camera_rig.look_at_player(player)
 	await get_tree().create_timer(1.0).timeout
+	
+	if dice_turn_token != turn_id: return
 	
 	if player.is_in_jail:
 		_handle_jail_roll(player, die1, die2)
@@ -211,26 +234,38 @@ func _on_dice_result(die1, die2):
 		player.negative_dice = false
 	else:
 		await player.move_steps(die1 + die2, tiles)
-	resolve_tile(player)
+	if dice_turn_token == turn_id:
+			resolve_tile(player)
 
 #ends turn with jail check
 func _end_turn():
 	ui.clear_buttons()
 	var player = players[current_player]
+	
+	# Check for doubles first
 	if rolled_doubles and not player.is_bankrupt and not player.is_in_jail:
+		print("Doubles rolled! " + player.player_name + " goes again.")
 		start_turn()
 		return
+	
+	# Reset turn state
 	doubles_count = 0
 	rolled_doubles = false
-	current_player = (current_player + 1) % players.size()
-	var search_count = 0
 	for t in tiles: t.set_highlight(false)
-	while search_count < players.size():
+
+	# Move to the next valid player
+	var next_player_found = false
+	var attempts = 0
+	
+	while not next_player_found and attempts < players.size():
+		current_player = (current_player + 1) % players.size()
+		attempts += 1
+		
 		if not players[current_player].is_bankrupt:
+			next_player_found = true
+			print("Transitioning turn to: " + players[current_player].player_name)
 			start_turn()
 			return
-		current_player = (current_player + 1) % players.size()
-		search_count += 1
 
 #--------------------------------------
 #JAIL
@@ -242,8 +277,9 @@ func send_to_jail(player):
 	player.jail_turns = 0
 	doubles_count = 0
 	rolled_doubles = false
-	player.current_tile = JAIL_INDEX 
-	player.global_position = tiles[JAIL_INDEX].global_position + Vector3(0, 0.1, 0)
+	player.current_tile = 10
+	player.relocate_on_tile(tiles[10].global_position, player.get_visual_offset())
+	
 	show_default_actions()
 
 #jail helpers
@@ -310,9 +346,8 @@ func resolve_tile(player):
 					print("[AI] Decision: Buying Property.")
 					_buy_property() 
 				else:
-					print("[AI] Decision: Not enough money. Passing.")
-					# Skipping auction for now to keep it simple
-					show_default_actions()
+					print("[AI] Decision: Not enough money. Starting Auction.")
+					_start_auction()
 			# --------------------
 			else:
 				ui.show_property_buttons(_buy_property, _start_auction, can_buy)
@@ -366,13 +401,17 @@ func _buy_property():
 
 #show default actions
 func show_default_actions(camera_pan: bool = true):
+	var action_turn_token = turn_id
 	game_state = GameState.TURN_ACTIONS
 	var player = players[current_player]
 	
-	# --- AI_BLOCK ---
 	if player.is_ai:
-		print("[AI] Options: End Turn, Build, Sell, Mortgage, Trade")
-		await get_tree().create_timer(1.0).timeout
+		print("[AI] Thinking about ending turn...")
+		await get_tree().create_timer(1.2).timeout
+		if action_turn_token != turn_id or game_state != GameState.TURN_ACTIONS:
+			print("[DEBUG] Ghost AI 'End Turn' blocked.")
+			return
+			
 		print("[AI] Decision: End Turn.")
 		_end_turn()
 		return
@@ -419,7 +458,11 @@ func _on_auction_finished(winner, property, final_price):
 		winner.properties.append(property)
 		property.tile_owner = winner
 		ui.update_ui()
+		property.set_highlight(true, Color.GREEN)
+		await get_tree().create_timer(0.2).timeout
+		property.set_highlight(false)
 	show_default_actions()
+	ui.show_property_details(property)
 
 #-----------------------------------
 # PROPERTY SELECTION
@@ -492,49 +535,28 @@ func _on_tile_clicked(tile):
 func check_liquidation(player):
 	if player.money < 0:
 		game_state = GameState.LIQUIDATION
-		# --- AI_BLOCK ---
 		if player.is_ai:
 			print("[AI] Status: Bankrupt! Options: Sell, Mortgage, Give Up")
 			await get_tree().create_timer(1.0).timeout
 			print("[AI] Decision: Give Up (Bankrupt).")
 			_declare_bankruptcy()
 			return
-		# ----------------------------
-		var action_space = { "declare_bankruptcy": [] }
+
 		var sellable = []
 		var mortgageable = []
-		
 		for t in player.properties:
-			if property_manager.is_valid_for_action(t, "sell", player, tiles): sellable.append(t)
+			if property_manager.is_valid_for_action(t, "sell", player, tiles):     sellable.append(t)
 			if property_manager.is_valid_for_action(t, "mortgage", player, tiles): mortgageable.append(t)
-			
-		if sellable.size() > 0: action_space["sell"] = sellable
-		if mortgageable.size() > 0: action_space["mortgage"] = mortgageable
+
 		var current_pos = players[current_player].global_position
 		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
 		ui.show_turn_actions({
-			"build": setup_tile_selection.bind("build", Color(0.611, 0.993, 0.0, 1.0)),
-			"sell": setup_tile_selection.bind("sell", Color(1.0, 0.812, 0.85, 1.0)),
-			"mortgage": setup_tile_selection.bind("mortgage", Color(0.841, 0.857, 1.0, 1.0)),
-			"unmortgage": setup_tile_selection.bind("unmortgage", Color(1.0, 0.85, 0.5)),
-			"trade": func(): ui.trade_selector(players,current_player), 
-			"end_turn": _declare_bankruptcy 
-		}, true) 
-	else:
-		show_default_actions()
-	if player.money < 0:
-		game_state = GameState.LIQUIDATION
-		var current_pos = players[current_player].global_position
-		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
-			
-		ui.show_turn_actions({
-			"build": setup_tile_selection.bind("build", Color(0.611, 0.993, 0.0, 1.0)),
-			"sell": setup_tile_selection.bind("sell", Color(1.0, 0.812, 0.85, 1.0)),
-			"mortgage": setup_tile_selection.bind("mortgage", Color(0.841, 0.857, 1.0, 1.0)),
-			"unmortgage": setup_tile_selection.bind("unmortgage", Color(1.0, 0.85, 0.5)),
-			"trade": func(): ui.trade_selector(players,current_player), 
-			"end_turn": _declare_bankruptcy 
-		}, true) 
+			"sell":       setup_tile_selection.bind("sell",      Color(1.0,  0.812, 0.85,  1.0)),
+			"mortgage":   setup_tile_selection.bind("mortgage",  Color(0.841,0.857, 1.0,   1.0)),
+			"unmortgage": setup_tile_selection.bind("unmortgage",Color(1.0,  0.85,  0.5)),
+			"trade":      func(): ui.trade_selector(players, current_player),
+			"end_turn":   _declare_bankruptcy
+		}, true)
 	else:
 		show_default_actions()
 
@@ -558,11 +580,12 @@ func _check_win_condition() -> bool:
 	for p in players:
 		if not p.is_bankrupt:
 			active_players.append(p)
-	
+
 	if active_players.size() == 1:
 		ui.update_turn_display(active_players[0].player_name + " WINS!")
 		ui.clear_buttons()
 		print("Winner is: ", active_players[0].player_name)
+		return true
 	return false
 	
 

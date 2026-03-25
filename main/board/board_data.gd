@@ -189,7 +189,7 @@ const TILES : Array[Dictionary] = [
 	"mortgage":140},
 
 	# --- SIDE 4 ---
-	{"name":"Go To\nHumanities","type":TileType.CORNER,"icon":ICON_GO_TO,"desc":"You can read..."},
+	{"name":"Go To\nHumanities","type":TileType.CORNER,"icon":ICON_GO_TO,"desc":""},
 
 	{"name":"MSB","type":TileType.PROPERTY,
 	"price":300,"color":"Green",

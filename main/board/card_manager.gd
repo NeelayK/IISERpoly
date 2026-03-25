@@ -83,103 +83,6 @@ const fund_cards := [
 func setup(game_controller_ref: Node3D):
 	gc = game_controller_ref
 
-#function for handling game_state,card draw,type
-func handle_draw_card(player, is_chance):
-	gc.game_state = gc.GameState.TURN_ACTIONS
-	var card_list = chance_cards if is_chance else fund_cards
-	var card_data = card_list.pick_random()
-	gc.ui.show_drawn_card(card_data, is_chance)
-	await gc.ui.card_accepted
-	match card_data["type"]:
-		"negative_dice":
-			player.negative_dice = true
-			gc.show_default_actions()
-			
-		"swap_money":
-				var target_idx: int
-				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
-				target_idx = await gc.ui.target_selected
-				_execute_money_swap(gc.players[gc.current_player], gc.players[target_idx])
-			
-		"swap_property":
-			_start_property_swap()
-			return
-
-		"steal_property":
-			_start_property_steal()
-			return
-			
-		"collect":
-			player.money += card_data["value"]
-			gc.ui.update_ui()
-			gc.show_default_actions()
-			
-		"pay":
-			player.money -= card_data["value"]
-			gc.library_reward += card_data["value"]
-			gc.ui.update_ui()
-			gc.check_liquidation(player)
-			
-		"collect_all":
-			var total_collected = 0
-			for p in gc.players:
-				if p != player and not p.is_bankrupt:
-					p.money -= card_data["value"]
-					total_collected += card_data["value"]
-			player.money += total_collected
-			gc.ui.update_ui()
-			gc.show_default_actions()
-			
-		"pay_all":
-			var total_paid = 0
-			for p in gc.players:
-				if p != player and not p.is_bankrupt:
-					p.money += card_data["value"]
-					total_paid += card_data["value"]
-			player.money -= total_paid
-			gc.ui.update_ui()
-			gc.check_liquidation(player)
-			
-		"move":
-			await player.move_steps(card_data["value"], gc.tiles)
-			gc.resolve_tile(player) 
-			
-		"move_to":
-			var target_idx = int(card_data["target"])
-			if target_idx < player.current_tile and target_idx != 10:
-				print(player.player_name, " passed GO! Collecting 200.")
-				player.money += 200
-				gc.ui.update_ui()
-			
-			player.current_tile = target_idx
-			player.global_position = gc.tiles[target_idx].global_position + Vector3(0, 0.1, 0)
-			player.next_rent_free = card_data.get("rent_free", false) 
-			gc.resolve_tile(player)
-			
-		"go_to_jail":
-			gc.send_to_jail(player)
-			
-		"out_of_jail":
-			player.jail_free_cards += 1
-			gc.ui.update_ui()
-			gc.show_default_actions()
-			
-		"extra_turn":
-			gc.rolled_doubles = true 
-			gc.show_default_actions()
-			
-		"skip_turn":
-			player.skip_turn = true
-			gc.show_default_actions()
-			
-		"skip_other_turn":
-			var target_idx: int
-			gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
-			target_idx = await gc.ui.target_selected
-			_execute_skip_turn(gc.players[target_idx])
-		_: 
-			gc.show_default_actions()
-
 #money swap function
 func _execute_money_swap(p1, p2):
 	var temp_money = p1.money
@@ -304,3 +207,183 @@ func _start_property_steal():
 	gc.selected_target_tile = null
 	gc.ui.show_instruction("Select a property to steal!")
 	_update_swap_highlights()
+
+
+func handle_draw_card(player, is_chance):
+	gc.game_state = gc.GameState.TURN_ACTIONS
+	var card_list = chance_cards if is_chance else fund_cards
+	var card_data = card_list.pick_random()
+	gc.ui.show_drawn_card(card_data, is_chance)
+	await gc.ui.card_accepted
+	
+	match card_data["type"]:
+		"negative_dice":
+			player.negative_dice = true
+			gc.show_default_actions()
+			
+		"swap_money":
+			var target_idx: int
+			if player.is_ai:
+				target_idx = _ai_choose_richest_player(player)
+				print("[AI] Swapping money with: " + gc.players[target_idx].player_name)
+			else:
+				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
+				target_idx = await gc.ui.target_selected
+			_execute_money_swap(player, gc.players[target_idx])
+			
+		"swap_property":
+			if player.is_ai:
+				_ai_execute_property_swap(player)
+			else:
+				_start_property_swap()
+			return
+
+		"steal_property":
+			if player.is_ai:
+				_ai_execute_property_steal(player)
+			else:
+				_start_property_steal()
+			return
+			
+		"skip_other_turn":
+			var target_idx: int
+			if player.is_ai:
+				target_idx = _ai_choose_richest_player(player)
+				print("[AI] Skipping turn of: " + gc.players[target_idx].player_name)
+			else:
+				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
+				target_idx = await gc.ui.target_selected
+			_execute_skip_turn(gc.players[target_idx])
+			
+		"collect":
+			player.money += card_data["value"]
+			gc.ui.update_ui()
+			gc.show_default_actions()
+			
+		"pay":
+			player.money -= card_data["value"]
+			gc.library_reward += card_data["value"]
+			gc.ui.update_ui()
+			gc.check_liquidation(player)
+			
+		"collect_all":
+			var total_collected = 0
+			for p in gc.players:
+				if p != player and not p.is_bankrupt:
+					p.money -= card_data["value"]
+					total_collected += card_data["value"]
+			player.money += total_collected
+			gc.ui.update_ui()
+			gc.show_default_actions()
+			
+		"pay_all":
+			var total_paid = 0
+			for p in gc.players:
+				if p != player and not p.is_bankrupt:
+					p.money += card_data["value"]
+					total_paid += card_data["value"]
+			player.money -= total_paid
+			gc.ui.update_ui()
+			gc.check_liquidation(player)
+			
+		"move":
+			await player.move_steps(card_data["value"], gc.tiles)
+			gc.resolve_tile(player) 
+			
+		"move_to":
+			var target_idx = int(card_data["target"])
+			if target_idx < player.current_tile and target_idx != 10:
+				print(player.player_name, " passed GO! Collecting 200.")
+				player.money += 200
+				gc.ui.update_ui()
+			
+			player.current_tile = target_idx
+			player.global_position = gc.tiles[target_idx].global_position + Vector3(0, 0.1, 0)
+			player.next_rent_free = card_data.get("rent_free", false) 
+			gc.resolve_tile(player)
+			
+		"go_to_jail":
+			gc.send_to_jail(player)
+			
+		"out_of_jail":
+			player.jail_free_cards += 1
+			gc.ui.update_ui()
+			gc.show_default_actions()
+			
+		"extra_turn":
+			gc.rolled_doubles = true 
+			gc.show_default_actions()
+			
+		"skip_turn":
+			player.skip_turn = true
+			gc.show_default_actions()
+		
+		_: 
+			gc.show_default_actions()
+
+# --- AI HELPER FUNCTIONS ---
+
+func _ai_choose_richest_player(ai_player) -> int:
+	var best_idx = 0
+	var max_money = -1
+	for i in range(gc.players.size()):
+		var p = gc.players[i]
+		if p == ai_player or p.is_bankrupt: continue
+		if p.money > max_money:
+			max_money = p.money
+			best_idx = i
+	return best_idx
+
+func _ai_execute_property_steal(ai_player):
+	var best_target = null
+	var highest_price = -1
+	
+	for t in gc.tiles:
+		if not t.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.UTILITY, BoardData.TileType.CAFE]: continue
+		if t.tile_owner != null and t.tile_owner != ai_player:
+			if t.tile_data.get("price", 0) > highest_price:
+				highest_price = t.tile_data.get("price", 0)
+				best_target = t
+				
+	if best_target:
+		print("[AI] Stealing property: " + best_target.tile_data.get("name", "Unknown"))
+		gc.game_state = gc.GameState.STEAL_PROPERTY
+		gc.selected_target_tile = best_target
+		complete_action()
+	else:
+		print("[AI] No valid properties to steal.")
+		gc.show_default_actions()
+
+func _ai_execute_property_swap(ai_player):
+	if ai_player.properties.size() == 0:
+		print("[AI] No properties to swap.")
+		gc.show_default_actions()
+		return
+		
+	var my_worst = ai_player.properties[0]
+	for p in ai_player.properties:
+		var t_color = p.tile_data.get("color", "")
+		if p.tile_data.get("price", 0) < my_worst.tile_data.get("price", 0) and not gc.board_state.has_monopoly(p.tile_owner, t_color):
+			my_worst = p
+			
+	var best_target = null
+	var highest_price = -1
+	for t in gc.tiles:
+		if not t.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.UTILITY, BoardData.TileType.CAFE]: continue
+		if t.tile_owner != null and t.tile_owner != ai_player:
+			var t_color = t.tile_data.get("color", "")
+			if gc.board_state.has_monopoly(t.tile_owner, t_color): continue
+			
+			if t.tile_data.get("price", 0) > highest_price:
+				highest_price = t.tile_data.get("price", 0)
+				best_target = t
+				
+	if best_target:
+		print("[AI] Swapping my " + my_worst.tile_data.get("name") + " for " + best_target.tile_data.get("name"))
+		gc.game_state = gc.GameState.SWAP_PROPERTIES
+		gc.selected_own_tile = my_worst
+		gc.selected_target_tile = best_target
+		complete_action()
+	else:
+		print("[AI] No valid targets to swap.")
+		gc.show_default_actions()

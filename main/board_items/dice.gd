@@ -62,7 +62,7 @@ func _integrate_forces(state):
 		call_deferred("finalize_roll") 
 
 func finalize_roll():
-	print("finalize_roll")
+	#print("finalize_roll")
 	rolling = false
 	freeze = true 
 	
@@ -81,7 +81,7 @@ func finalize_roll():
 	emit_signal("roll_finished", get_top_face())
 
 func get_top_face():
-	print("get_top_face")
+	#print("get_top_face")
 	var best_dot = -1.0
 	var best_face = 1
 	for dir in face_values.keys():
