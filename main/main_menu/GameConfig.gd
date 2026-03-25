@@ -2,6 +2,7 @@ extends Node
 
 var player_data = [] 
 var new_scale = 1.0
+var is_training = true
 
 const COLOR_WHITE = Color("ccc8bfff") 
 const COLOR_LIGHT_BLUE = Color("479ecfff")

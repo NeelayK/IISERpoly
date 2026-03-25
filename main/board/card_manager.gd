@@ -8,16 +8,17 @@ var gc : Node3D
 #region Card Data
 
 const chance_cards := [
-	{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
-	{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
-	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
+	#{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
+	#{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
+	#{"text": "Massive banking error! Swap your exact money balance with a player of your choice.", "type": "swap_money"},
+	#{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
+	#{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"},
 	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
 	{"text": "Director catches you for not walking on the footpath. Go back 3 spaces.", "type": "move", "value": -3},
 	{"text": "You bunk classes. Advance to the Library and collect the library reward.", "type": "move_to", "target": 20},
 	{"text": "You are caught misusing the water filter. Pay a fine of 50.", "type": "pay", "value": 50},
 	{"text": "Ishya celebrations begin! Advance to the Indoor Stadium.", "type": "move_to", "target": 11},
 	{"text": "The Director participates in a sports fest. Advance to the Volleyball Court.", "type": "move_to", "target": 8},
-
 	{"text": "Class cancelled! Take an extra turn.", "type": "extra_turn"},
 	{"text": "UPI payment system is down. Pay 30 in cash.", "type": "pay", "value": 30},
 	{"text": "Floor WiFi is down. Go back to CDH 2.", "type": "move_to", "target": 18},
@@ -29,7 +30,6 @@ const chance_cards := [
 	{"text": "You sprint across campus. Advance 5 spaces.", "type": "move", "value": 5},
 	{"text": "You finally start walking on the footpath. Advance 3 spaces.", "type": "move", "value": 3},
 	{"text": "You accidentally paid your mess fees twice. Collect 100 refund.", "type": "collect", "value": 100},
-	{"text": "Massive banking error! Swap your exact money balance with a player of your choice.", "type": "swap_money"},
 	{"text": "Course review results are out. Sabotage! Pay 50 to each player.", "type": "pay_all", "value": 50},
 	{"text": "Exam correction was done conservatively this semester. Collect a 25 academic bonus.", "type": "collect", "value": 25},
 	{"text": "Your exam paper was not found. Move back 5 spaces in panic.", "type": "move", "value": -5},
@@ -40,8 +40,7 @@ const chance_cards := [
 	{"text": "You made a meme about the professor and it went viral. Collect 200.", "type": "collect", "value": 200},
 	{"text": "You find a shortcut through campus. Advance 4 spaces.", "type": "move", "value": 4},
 	{"text": "Your CGPA suddenly increases after re-evaluation. Collect an academic scholarship of 150.", "type": "collect", "value": 150},
-	{"text": "You attend a guest lecture that nobody else knows about. Take another turn.", "type": "extra_turn"},
-	{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"}
+	{"text": "You attend a guest lecture that nobody else knows about. Take another turn.", "type": "extra_turn"}
 ]
 
 const fund_cards := [
@@ -217,43 +216,37 @@ func handle_draw_card(player, is_chance):
 	await gc.ui.card_accepted
 	
 	match card_data["type"]:
-		"negative_dice":
-			player.negative_dice = true
-			gc.show_default_actions()
-			
 		"swap_money":
-			var target_idx: int
 			if player.is_ai:
-				target_idx = _ai_choose_richest_player(player)
-				print("[AI] Swapping money with: " + gc.players[target_idx].player_name)
+				gc.GameState = gc.GameState.SWAP_SELECT_PLAYER
 			else:
 				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
-				target_idx = await gc.ui.target_selected
-			_execute_money_swap(player, gc.players[target_idx])
+				var target_idx = await gc.ui.target_selected
+				_execute_money_swap(player, gc.players[target_idx])
 			
 		"swap_property":
 			if player.is_ai:
-				_ai_execute_property_swap(player)
+				gc.GameState = gc.GameState.SWAP_PROPERTIES
 			else:
 				_start_property_swap()
-			return
 
 		"steal_property":
 			if player.is_ai:
-				_ai_execute_property_steal(player)
+				gc.GameState = gc.GameState.STEAL_PROPERTY
 			else:
 				_start_property_steal()
-			return
-			
+				
 		"skip_other_turn":
-			var target_idx: int
 			if player.is_ai:
-				target_idx = _ai_choose_richest_player(player)
-				print("[AI] Skipping turn of: " + gc.players[target_idx].player_name)
+				gc.GameState = gc.GameState.SKIP_OTHER_TURN
 			else:
 				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
-				target_idx = await gc.ui.target_selected
-			_execute_skip_turn(gc.players[target_idx])
+				var target_idx = await gc.ui.target_selected
+				_execute_skip_turn(gc.players[target_idx])
+			
+		"negative_dice":
+			player.negative_dice = true
+			gc.show_default_actions()
 			
 		"collect":
 			player.money += card_data["value"]
@@ -320,70 +313,3 @@ func handle_draw_card(player, is_chance):
 		
 		_: 
 			gc.show_default_actions()
-
-# --- AI HELPER FUNCTIONS ---
-
-func _ai_choose_richest_player(ai_player) -> int:
-	var best_idx = 0
-	var max_money = -1
-	for i in range(gc.players.size()):
-		var p = gc.players[i]
-		if p == ai_player or p.is_bankrupt: continue
-		if p.money > max_money:
-			max_money = p.money
-			best_idx = i
-	return best_idx
-
-func _ai_execute_property_steal(ai_player):
-	var best_target = null
-	var highest_price = -1
-	
-	for t in gc.tiles:
-		if not t.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.UTILITY, BoardData.TileType.CAFE]: continue
-		if t.tile_owner != null and t.tile_owner != ai_player:
-			if t.tile_data.get("price", 0) > highest_price:
-				highest_price = t.tile_data.get("price", 0)
-				best_target = t
-				
-	if best_target:
-		print("[AI] Stealing property: " + best_target.tile_data.get("name", "Unknown"))
-		gc.game_state = gc.GameState.STEAL_PROPERTY
-		gc.selected_target_tile = best_target
-		complete_action()
-	else:
-		print("[AI] No valid properties to steal.")
-		gc.show_default_actions()
-
-func _ai_execute_property_swap(ai_player):
-	if ai_player.properties.size() == 0:
-		print("[AI] No properties to swap.")
-		gc.show_default_actions()
-		return
-		
-	var my_worst = ai_player.properties[0]
-	for p in ai_player.properties:
-		var t_color = p.tile_data.get("color", "")
-		if p.tile_data.get("price", 0) < my_worst.tile_data.get("price", 0) and not gc.board_state.has_monopoly(p.tile_owner, t_color):
-			my_worst = p
-			
-	var best_target = null
-	var highest_price = -1
-	for t in gc.tiles:
-		if not t.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.UTILITY, BoardData.TileType.CAFE]: continue
-		if t.tile_owner != null and t.tile_owner != ai_player:
-			var t_color = t.tile_data.get("color", "")
-			if gc.board_state.has_monopoly(t.tile_owner, t_color): continue
-			
-			if t.tile_data.get("price", 0) > highest_price:
-				highest_price = t.tile_data.get("price", 0)
-				best_target = t
-				
-	if best_target:
-		print("[AI] Swapping my " + my_worst.tile_data.get("name") + " for " + best_target.tile_data.get("name"))
-		gc.game_state = gc.GameState.SWAP_PROPERTIES
-		gc.selected_own_tile = my_worst
-		gc.selected_target_tile = best_target
-		complete_action()
-	else:
-		print("[AI] No valid targets to swap.")
-		gc.show_default_actions()

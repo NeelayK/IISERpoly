@@ -9,8 +9,7 @@ var dice2
 var die1_result := -1
 var die2_result := -1
 var is_rolling   := false
-
-const SAFETY_TIMEOUT := 7.0
+const SAFETY_TIMEOUT := 4.0
 
 func _ready():
 	dice1 = dice_scene.instantiate()

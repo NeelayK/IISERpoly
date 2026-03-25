@@ -9,6 +9,7 @@ extends Node3D
 @onready var auction_manager = $AuctionManager
 @onready var property_manager = $PropertyManager
 @onready var card_manager = $CardManager
+@onready var ai_manager = $AIManager
 
 #Constants
 var  PLAYER_COUNT = GameConfig.player_data.size()
@@ -16,15 +17,16 @@ const JAIL_INDEX := 10
 const JAIL_FINE := 50
 const PLAYER_SCALE = 0.3
 const MAX_JAIL_TURNS := 4
-enum GameState { 
-	WAITING_ROLL, PLAYER_MOVING, PROPERTY_DECISION, TURN_ACTIONS, 
-	AUCTION, SELECTING_TILE, LIQUIDATION, 
-	SWAP_SELECT_PLAYER, SWAP_PROPERTIES, STEAL_PROPERTY, TRADING, SKIP_OTHER_TURN 
+enum GameState {
+	WAITING_ROLL, PLAYER_MOVING, PROPERTY_DECISION, TURN_ACTIONS,
+	AUCTION, SELECTING_TILE, LIQUIDATION,
+	SWAP_SELECT_PLAYER, SWAP_PROPERTIES, STEAL_PROPERTY, TRADING, SKIP_OTHER_TURN
 }
 
 #variables
 var turn_id: int = 0
 var selected_own_tile = null
+var trade_requests := 0
 var selected_target_tile = null
 var latest_die_sum := 0
 var game_state = GameState.WAITING_ROLL
@@ -37,25 +39,21 @@ var rolled_doubles := false
 var game_started := false
 var library_reward := 0
 var is_reviewing_trade := false
-
-#------------------------------------
-#MAIN SETUP
-#------------------------------------
+@export var ai_controllers: Array[MonopolyAIController]
 
 #INITIALIZATION: setup children, connect ui functions
 func _ready():
 	await get_tree().process_frame
-	# Setup Sub-Managers
-	auction_manager.setup(ui)
+	auction_manager.setup(self, ui)
 	auction_manager.auction_finished.connect(_on_auction_finished)
 	property_manager.setup(board_state)
 	card_manager.setup(self)
-	
+	setup_ai_players()
 	ui.player_hovered.connect(_on_player_ui_hovered)
 	ui.player_unhovered.connect(_on_player_ui_unhovered)
 	
 	tiles = board_state.get_tiles()
-	for t in tiles: 
+	for t in tiles:
 		t.tile_clicked.connect(_on_tile_clicked)
 	spawn_players()
 	ui.setup_players(players)
@@ -71,6 +69,13 @@ func _ready():
 		push_error("No players found in GameConfig.")
 	game_started = true
 	for t in tiles: t.set_highlight(false)
+
+func setup_ai_players():
+	for i in range(ai_controllers.size()):
+		var controller = ai_controllers[i]
+		var target_player = players[i]
+		controller.setup(self, target_player)
+		controller.add_to_group("agent")
 
 func _on_player_move_finished():
 	for tile_idx in range(tiles.size()):
@@ -94,17 +99,17 @@ func _rearrange_players_on_tile(tile_idx: int):
 
 #function to spawn players with global position
 func spawn_players():
-	players.clear() 
+	players.clear()
 	var actual_count = GameConfig.player_data.size()
 	for i in range(actual_count):
 		var config = GameConfig.player_data[i]
-		var new_player = player_scene.instantiate() 
+		var new_player = player_scene.instantiate()
 		
 		add_child(new_player)
-		new_player.player_index = i 
+		new_player.player_index = i
 		
 		new_player.player_name = config["name"]
-		new_player.is_ai = config["is_ai"]        
+		new_player.is_ai = config["is_ai"]
 		new_player.move_finished.connect(_on_player_move_finished)
 		var player_mesh_instance = new_player.get_node("MeshInstance3D")
 		player_mesh_instance.mesh = config["model"]
@@ -119,6 +124,7 @@ func spawn_players():
 
 func start_turn():
 	turn_id += 1
+	trade_requests = 0
 	var current_turn_token = turn_id
 	
 	game_state = GameState.WAITING_ROLL
@@ -134,13 +140,8 @@ func start_turn():
 	ui.update_turn_display(String(player.player_name) + "'s Turn ")
 	
 	if player.is_ai:
-		await get_tree().create_timer(1.0).timeout
-		if current_turn_token != turn_id: return 
-		
-		if player.is_in_jail:
-			_handle_jail_turn(player)
-		else:
-			_handle_normal_turn(player)
+		if current_turn_token != turn_id: return
+		game_state = GameState.TURN_ACTIONS
 	else:
 		if player.is_in_jail:
 			var can_pay = player.money >= JAIL_FINE
@@ -149,36 +150,6 @@ func start_turn():
 		else:
 			ui.show_roll_button(_roll_pressed)
 			
-func _handle_jail_turn(player):
-	var can_pay = player.money >= JAIL_FINE
-	var has_card = player.jail_free_cards > 0
-	
-	if player.is_ai:
-		print("[AI] Status: In Jail. Options: Roll, Pay, Card")
-		await get_tree().create_timer(1.0).timeout
-		if game_state != GameState.WAITING_ROLL or players[current_player] != player:
-			return
-
-		if player.jail_turns >= 2 and can_pay:
-			print("[AI] Decision: Paying Fine (Max turns reached).")
-			_pay_jail_fine()
-		else:
-			print("[AI] Decision: Rolling for Doubles.")
-			_roll_pressed()
-	else:
-		ui.show_jail_buttons(_pay_jail_fine, _use_jail_card, _roll_pressed, can_pay, has_card)
-
-func _handle_normal_turn(player):
-	if player.is_ai:
-		print("[AI] Status: Normal. Options: Roll")
-		await get_tree().create_timer(1.0).timeout
-		if game_state == GameState.WAITING_ROLL and players[current_player] == player:
-			print("[AI] Decision: Rolling Dice.")
-			_roll_pressed()
-		else:
-			print("[DEBUG] AI skip prevented: Game state changed during await.")
-	else:
-		ui.show_roll_button(_roll_pressed)
 
 #roll die/pause
 func _input(event):
@@ -190,7 +161,7 @@ func _input(event):
 			return
 
 		if event.is_action_pressed("action_roll") and game_state == GameState.WAITING_ROLL:
-			if not player.is_in_jail: 
+			if not player.is_in_jail:
 				_roll_pressed()
 				
 		if event.is_action_pressed("action_pause"):
@@ -235,7 +206,7 @@ func _on_dice_result(die1, die2):
 	else:
 		await player.move_steps(die1 + die2, tiles)
 	if dice_turn_token == turn_id:
-			resolve_tile(player)
+		resolve_tile(player)
 
 #ends turn with jail check
 func _end_turn():
@@ -336,20 +307,8 @@ func resolve_tile(player):
 	if tile.tile_type in [BoardData.TileType.PROPERTY, BoardData.TileType.CAFE, BoardData.TileType.UTILITY]:
 		if tile.tile_owner == null:
 			game_state = GameState.PROPERTY_DECISION
-			var can_buy = player.money >= tile.tile_data.get("price", 0)
-			
-			# --- AI_BLOCK ---
-			if player.is_ai:
-				print("[AI] Landed on unowned property. Options: Buy, Auction")
-				await get_tree().create_timer(1.0).timeout
-				if can_buy:
-					print("[AI] Decision: Buying Property.")
-					_buy_property() 
-				else:
-					print("[AI] Decision: Not enough money. Starting Auction.")
-					_start_auction()
-			# --------------------
-			else:
+			if not player.is_ai:
+				var can_buy = player.money >= tile.tile_data.get("price", 0)
 				ui.show_property_buttons(_buy_property, _start_auction, can_buy)
 				
 		elif tile.tile_owner != player:
@@ -369,13 +328,13 @@ func resolve_tile(player):
 			
 	elif tile.tile_type == BoardData.TileType.FEES:
 		player.money -= tile.tile_data.get("price", 100)
-		library_reward += tile.tile_data.get("price", 100) 
+		library_reward += tile.tile_data.get("price", 100)
 		ui.update_ui()
 		check_liquidation(player)
 		
 	elif tile.tile_type == BoardData.TileType.CHANCE:
 		card_manager.handle_draw_card(player, true)
-	elif tile.tile_type == BoardData.TileType.PROJECT_FUNDS: 
+	elif tile.tile_type == BoardData.TileType.PROJECT_FUNDS:
 		card_manager.handle_draw_card(player, false)
 		
 	else:
@@ -386,7 +345,7 @@ func _buy_property():
 	var player = players[current_player]
 	var tile = tiles[player.current_tile]
 	var price = tile.tile_data.get("price", 0)
-	if price == 0: 
+	if price == 0:
 		print("Error: Attempted to buy a tile with no price!")
 		return
 	player.money -= tile.tile_data.price
@@ -401,45 +360,31 @@ func _buy_property():
 
 #show default actions
 func show_default_actions(camera_pan: bool = true):
-	var action_turn_token = turn_id
 	game_state = GameState.TURN_ACTIONS
 	var player = players[current_player]
 	
-	if player.is_ai:
-		print("[AI] Thinking about ending turn...")
-		await get_tree().create_timer(1.2).timeout
-		if action_turn_token != turn_id or game_state != GameState.TURN_ACTIONS:
-			print("[DEBUG] Ghost AI 'End Turn' blocked.")
-			return
-			
-		print("[AI] Decision: End Turn.")
-		_end_turn()
-		return
-	# -------------------------
-	var action_space = { "end_turn": [] }
+	# 1. Define what is possible in this moment
 	var buildable = []
 	var sellable = []
 	var mortgageable = []
 	var unmortgageable = []
+	
 	for t in player.properties:
 		if property_manager.is_valid_for_action(t, "build", player, tiles): buildable.append(t)
 		if property_manager.is_valid_for_action(t, "sell", player, tiles): sellable.append(t)
 		if property_manager.is_valid_for_action(t, "mortgage", player, tiles): mortgageable.append(t)
 		if property_manager.is_valid_for_action(t, "unmortgage", player, tiles): unmortgageable.append(t)
-		
-	if buildable.size() > 0: action_space["build"] = buildable
-	if sellable.size() > 0: action_space["sell"] = sellable
-	if mortgageable.size() > 0: action_space["mortgage"] = mortgageable
-	if unmortgageable.size() > 0: action_space["unmortgage"] = unmortgageable
+
 	if camera_pan:
 		var current_pos = player.global_position
 		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
+	
 	ui.show_turn_actions({
 		"build": setup_tile_selection.bind("build", Color.GREEN),
 		"sell": setup_tile_selection.bind("sell", Color.RED),
 		"mortgage": setup_tile_selection.bind("mortgage", Color.ORANGE),
 		"unmortgage": setup_tile_selection.bind("unmortgage", Color.YELLOW),
-		"trade": func(): ui.trade_selector(players,current_player), 
+		"trade":_trade_possible,
 		"end_turn": _end_turn
 	})
 
@@ -497,7 +442,7 @@ func _on_tile_clicked(tile):
 			
 			if _color_group_has_funding(tile):
 				print("Cannot trade! You must sell buildings/funds in this set first.")
-				return 
+				return
 				
 			ui.toggle_trade_property(tile)
 		return
@@ -508,14 +453,14 @@ func _on_tile_clicked(tile):
 		
 		if tile.tile_owner == player:
 			if game_state == GameState.SWAP_PROPERTIES:
-					var can_swap = true
-					for t in tiles:
-						if t.tile_type == BoardData.TileType.PROPERTY and t.tile_data.get("color") == tile.tile_data.get("color"):
-							if t.funding > 0:
-								can_swap = false
-								break
-					if can_swap:
-						selected_own_tile = tile
+				var can_swap = true
+				for t in tiles:
+					if t.tile_type == BoardData.TileType.PROPERTY and t.tile_data.get("color") == tile.tile_data.get("color"):
+						if t.funding > 0:
+							can_swap = false
+							break
+				if can_swap:
+					selected_own_tile = tile
 		else:
 			var t_color = tile.tile_data.get("color", "")
 			if tile.tile_owner == null or not board_state.has_monopoly(tile.tile_owner, t_color):
@@ -533,6 +478,27 @@ func _on_tile_clicked(tile):
 #------------------------------
 
 func check_liquidation(player):
+	if player.money < 0:
+		game_state = GameState.LIQUIDATION
+		
+		# Gather facts for the AI/UI to see
+		var sellable = []
+		var mortgageable = []
+		for t in player.properties:
+			if property_manager.is_valid_for_action(t, "sell", player, tiles): sellable.append(t)
+			if property_manager.is_valid_for_action(t, "mortgage", player, tiles): mortgageable.append(t)
+
+		var current_pos = players[current_player].global_position
+		camera_rig.enable_tabletop_pan(Vector3(current_pos.x, 0, current_pos.z))
+		ui.show_turn_actions({
+			"sell": setup_tile_selection.bind("sell", Color(1.0, 0.812, 0.85)),
+			"mortgage": setup_tile_selection.bind("mortgage", Color(0.841, 0.857, 1.0)),
+			"unmortgage": setup_tile_selection.bind("unmortgage", Color(1.0, 0.85, 0.5)),
+			"trade": _trade_possible,
+			"end_turn": _declare_bankruptcy
+		}, true)
+	else:
+		show_default_actions()
 	if player.money < 0:
 		game_state = GameState.LIQUIDATION
 		if player.is_ai:
@@ -560,6 +526,11 @@ func check_liquidation(player):
 	else:
 		show_default_actions()
 
+func _trade_possible():
+	if trade_requests<3:
+		ui.trade_selector(players, current_player)
+		return
+
 func _declare_bankruptcy():
 	var player = players[current_player]
 	for t in player.properties:
@@ -569,7 +540,7 @@ func _declare_bankruptcy():
 		t.refresh_buildings()
 	player.is_bankrupt = true
 	player.properties.clear()
-	player.visible = false 
+	player.visible = false
 	for t in tiles: t.set_highlight(false)
 	ui.update_ui()
 	if not _check_win_condition():
@@ -593,14 +564,14 @@ func _check_win_condition() -> bool:
 #Player ui hover
 #----------------------------------------------------
 func _on_player_ui_hovered(player_index: int):
-	if game_state == GameState.SELECTING_TILE: return 
+	if game_state == GameState.SELECTING_TILE: return
 	var hovered_player = players[player_index]
 	for t in tiles:
 		if t.tile_owner == hovered_player: t.set_highlight(true, Color(0.016, 1.0, 0.914, 1.0))
 
 func _on_player_ui_unhovered():
 	if game_state == GameState.SELECTING_TILE: return
-	for t in tiles: 
+	for t in tiles:
 		t.set_highlight(false)
 	if game_state in [GameState.SWAP_PROPERTIES, GameState.STEAL_PROPERTY]:
 		$CardManager._update_swap_highlights()
@@ -658,12 +629,43 @@ func _cancel_trade():
 	ui.close_trade_panel()
 	camera_rig.look_at_player(players[current_player])
 	show_default_actions()
+	ui.update_turn_display(String(players[current_player].player_name) + "'s Turn ")
 	game_state = GameState.TURN_ACTIONS
 	
 func _on_trade_button_pressed():
 	if not is_reviewing_trade:
+		trade_requests += 1
 		is_reviewing_trade = true
 		ui.open_trade_review()
 		ui.update_turn_display("Waiting for " + ui.current_trade.p2.player_name + "...")
 	else:
 		_execute_trade()
+
+func ai_propose_trade(target_idx: int, give_prop_idx: int, take_prop_idx: int, offer_cash: int, demand_cash: int):
+	var p1 = players[current_player]
+	if target_idx < 0 or target_idx >= players.size() or target_idx == current_player:
+		return # Invalid target
+	var p2 = players[target_idx]
+	if p2.is_bankrupt:
+		return
+	start_trade_with(p2)
+	if give_prop_idx >= 0 and give_prop_idx < tiles.size():
+		var give_tile = tiles[give_prop_idx]
+		if give_tile.tile_owner == p1:
+			ui.toggle_trade_property(give_tile)
+			
+	if take_prop_idx >= 0 and take_prop_idx < tiles.size():
+		var take_tile = tiles[take_prop_idx]
+		if take_tile.tile_owner == p2:
+			ui.toggle_trade_property(take_tile)
+	ui.p1_cash_input.value = clamp(offer_cash, 0, p1.money)
+	ui.p2_cash_input.value = clamp(demand_cash, 0, p2.money)
+	ui.update_trade_ui()
+	var p1_giving = ui.current_trade.p1_props.size() > 0 or ui.p1_cash_input.value > 0
+	var p2_giving = ui.current_trade.p2_props.size() > 0 or ui.p2_cash_input.value > 0
+	
+	if p1_giving and p2_giving:
+		_on_trade_button_pressed()
+	else:
+		ui.close_trade_panel()
+		game_state = GameState.TURN_ACTIONS

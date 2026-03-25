@@ -22,6 +22,7 @@ var yaw_current := 0.0
 
 #switch focus to dice while maintaing yaw
 func show_dice(dice_center := Vector3.ZERO):
+	if GameConfig.is_training: return
 	pan_mode = false
 	tracked_player = null
 	is_transitioning = true
@@ -40,6 +41,7 @@ func show_dice(dice_center := Vector3.ZERO):
 
 #switch focus to player
 func look_at_player(player):
+	if GameConfig.is_training: return
 	pan_mode = false
 	tracked_player = player
 	is_transitioning = true
@@ -55,6 +57,7 @@ func look_at_player(player):
 	is_transitioning = false
 
 func enable_tabletop_pan(start_pos := Vector3.ZERO): #switch to tabletop pan
+	if GameConfig.is_training: return
 	pan_mode = true
 	tracked_player = null
 	pan_target = start_pos
