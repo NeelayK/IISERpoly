@@ -36,7 +36,7 @@ func _process_turn():
 		turn_index = 0
 
 	var bidding_player = participants[turn_index]
-	var minimum_bid = current_bid + 10
+	var _minimum_bid = current_bid + 10
 	ui.show_auction_panel(
 		bidding_player, 
 		auction_property, 

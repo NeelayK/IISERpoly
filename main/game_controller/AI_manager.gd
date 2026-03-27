@@ -279,7 +279,7 @@ func _generate_action_mask() -> Array:
 	return mask
 	
 func get_reward() -> float:
-	var reward = 0.0
+	reward = 0.0
 	var property_value = 0.0
 	var monopoly_count = 0
 	

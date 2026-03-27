@@ -2,17 +2,25 @@ import os
 from godot_rl.wrappers.stable_baselines_wrapper import StableBaselinesGodotEnv
 from stable_baselines3 import PPO
 
-env = StableBaselinesGodotEnv(env_path=None, show_window=True, speedup=8)
+LOAD_MODEL = False
+MODEL_PATH = "monopoly_ai_brain.zip" 
 
-model = PPO(
-    "MultiInputPolicy",
-    env,
-    verbose=1,
-    learning_rate=0.0003,
-    n_steps=2048,
-    batch_size=64,
-    ent_coef=0.01
-)
+env = StableBaselinesGodotEnv(env_path=None, show_window=True, speedup=64)
+
+if LOAD_MODEL and os.path.exists(MODEL_PATH):
+    print(f"--- Loading existing model from {MODEL_PATH} ---")
+    model = PPO.load(MODEL_PATH, env=env)
+else:
+    print("--- Creating new model ---")
+    model = PPO(
+        "MultiInputPolicy",
+        env,
+        verbose=1,
+        learning_rate=0.0003,
+        n_steps=2048,
+        batch_size=32,
+        ent_coef=0.01
+    )
 
 print("--- Starting Training: Connection Established ---")
 try:

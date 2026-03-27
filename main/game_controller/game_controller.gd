@@ -43,9 +43,9 @@ var is_reviewing_trade := false
 @export var ai_controllers: Array[MonopolyAIController]
 var active_ai_controllers: Array[MonopolyAIController] = []
 
-#INITIALIZATION: setup children, connect ui functions
 func _ready():
 	await get_tree().process_frame
+	randomize()
 	auction_manager.setup(self, ui)
 	auction_manager.auction_finished.connect(_on_auction_finished)
 	property_manager.setup(board_state)
