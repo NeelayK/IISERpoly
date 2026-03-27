@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cnv3d6w7ctol0" path="res://main/ui/game.gd" id="1_8nvx8"]
 [ext_resource type="Script" uid="uid://c6n7rj58sx6sw" path="res://main/board/board_setup.gd" id="1_ey7ds"]
 [ext_resource type="PackedScene" uid="uid://ddowb8y14hb8f" path="res://main/board/tile.tscn" id="2_514y6"]
+[ext_resource type="Script" uid="uid://mb8r3x2s1h3x" path="res://addons/godot_rl_agents/sync.gd" id="2_fcet5"]
 [ext_resource type="Script" uid="uid://t7a83a20bydn" path="res://main/board_items/dice_manager.gd" id="3_6d5ub"]
 [ext_resource type="Script" uid="uid://y1v1yfpxwe2y" path="res://main/board/board_state.gd" id="3_xyq2n"]
 [ext_resource type="PackedScene" uid="uid://d0gtlpkjl2ysl" path="res://main/board_items/dice.tscn" id="4_nyh1f"]
@@ -10,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://bvppo81bfjnr3" path="res://main/board_items/player.tscn" id="6_iph2q"]
 [ext_resource type="Script" uid="uid://ca3r4bqeum6d4" path="res://main/game_controller/auction_manager.gd" id="8_wcq3i"]
 [ext_resource type="Script" uid="uid://dfy7ak7bawpqf" path="res://main/game_controller/property_manager.gd" id="9_4ijfq"]
+[ext_resource type="PackedScene" uid="uid://byntux5b1ue5w" path="res://main/game_controller/ai_controller.tscn" id="9_fcet5"]
 [ext_resource type="Script" uid="uid://cve7iud4b7ck" path="res://main/board/card_manager.gd" id="10_3lxql"]
 [ext_resource type="Script" uid="uid://bfkxeaydd1sc1" path="res://main/ui/camera_rig.gd" id="15_sveyw"]
 [ext_resource type="PackedScene" uid="uid://dfgdebdcat2yf" path="res://main/ui/auction_panel.tscn" id="15_wcq3i"]
@@ -80,6 +82,7 @@ dice_controller = NodePath("../DiceManager")
 board_state = NodePath("../Board/BoardState")
 ui = NodePath("../UI")
 camera_rig = NodePath("../CameraRIG")
+ai_controller = ExtResource("9_fcet5")
 
 [node name="AuctionManager" type="Node3D" parent="GameController" unique_id=1801874946]
 script = ExtResource("8_wcq3i")
@@ -89,6 +92,8 @@ script = ExtResource("9_4ijfq")
 
 [node name="CardManager" type="Node3D" parent="GameController" unique_id=1144084039]
 script = ExtResource("10_3lxql")
+
+[node name="AIManager" type="Node3D" parent="GameController" unique_id=136790649]
 
 [node name="Environment" type="Node3D" parent="." unique_id=1011231608]
 
@@ -453,6 +458,14 @@ offset_right = 104.0
 offset_bottom = 52.0
 text = "x1"
 
+[node name="CameraButton" type="Button" parent="UI" unique_id=517801666]
+custom_minimum_size = Vector2(50, 50)
+offset_left = 106.0
+offset_top = 2.0
+offset_right = 156.0
+offset_bottom = 52.0
+text = "Cam"
+
 [node name="CameraRIG" type="Node3D" parent="." unique_id=429319313]
 script = ExtResource("15_sveyw")
 
@@ -464,5 +477,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55025, 0)
 [node name="PlayerAnchor" type="Node3D" parent="CameraRIG" unique_id=470789046]
 
 [node name="FreeAnchor" type="Node3D" parent="CameraRIG" unique_id=1018399853]
+
+[node name="Sync" type="Node" parent="." unique_id=871051146 groups=["rl_sync"]]
+process_mode = 3
+script = ExtResource("2_fcet5")
+action_repeat = 1
+metadata/_custom_type_script = "uid://mb8r3x2s1h3x"
 
 [connection signal="pressed" from="UI/CardPanel/VBoxContainer/AcceptButton" to="UI" method="_on_accept_button_pressed"]

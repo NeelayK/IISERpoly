@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="New Game Project"
+config/name="IISER-Poly"
 run/main_scene="uid://cpbxf6lg0y0mi"
 config/features=PackedStringArray("4.6", "Mobile")
 
@@ -25,6 +25,14 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_rl_agents/plugin.cfg")
+
+[global_group]
+
+rl_sync=""
 
 [gui]
 

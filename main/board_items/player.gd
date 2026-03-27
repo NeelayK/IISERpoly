@@ -33,7 +33,6 @@ func relocate_on_tile(tile_global_pos: Vector3, offset: Vector3):
 	tween.tween_property(self, "global_position", final_pos, 0.25)
 
 
-# Helper function with Squash and Stretch
 func jump_to(target: Vector3):
 	var start = global_position
 	var mid = (start + target) / 2

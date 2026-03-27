@@ -10,14 +10,15 @@ var gc : Node3D
 const chance_cards := [
 	{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
 	{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
+	{"text": "Massive banking error! Swap your exact money balance with a player of your choice.", "type": "swap_money"},
 	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
+	{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"},
 	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
 	{"text": "Director catches you for not walking on the footpath. Go back 3 spaces.", "type": "move", "value": -3},
 	{"text": "You bunk classes. Advance to the Library and collect the library reward.", "type": "move_to", "target": 20},
 	{"text": "You are caught misusing the water filter. Pay a fine of 50.", "type": "pay", "value": 50},
 	{"text": "Ishya celebrations begin! Advance to the Indoor Stadium.", "type": "move_to", "target": 11},
 	{"text": "The Director participates in a sports fest. Advance to the Volleyball Court.", "type": "move_to", "target": 8},
-
 	{"text": "Class cancelled! Take an extra turn.", "type": "extra_turn"},
 	{"text": "UPI payment system is down. Pay 30 in cash.", "type": "pay", "value": 30},
 	{"text": "Floor WiFi is down. Go back to CDH 2.", "type": "move_to", "target": 18},
@@ -29,7 +30,6 @@ const chance_cards := [
 	{"text": "You sprint across campus. Advance 5 spaces.", "type": "move", "value": 5},
 	{"text": "You finally start walking on the footpath. Advance 3 spaces.", "type": "move", "value": 3},
 	{"text": "You accidentally paid your mess fees twice. Collect 100 refund.", "type": "collect", "value": 100},
-	{"text": "Massive banking error! Swap your exact money balance with a player of your choice.", "type": "swap_money"},
 	{"text": "Course review results are out. Sabotage! Pay 50 to each player.", "type": "pay_all", "value": 50},
 	{"text": "Exam correction was done conservatively this semester. Collect a 25 academic bonus.", "type": "collect", "value": 25},
 	{"text": "Your exam paper was not found. Move back 5 spaces in panic.", "type": "move", "value": -5},
@@ -40,8 +40,7 @@ const chance_cards := [
 	{"text": "You made a meme about the professor and it went viral. Collect 200.", "type": "collect", "value": 200},
 	{"text": "You find a shortcut through campus. Advance 4 spaces.", "type": "move", "value": 4},
 	{"text": "Your CGPA suddenly increases after re-evaluation. Collect an academic scholarship of 150.", "type": "collect", "value": 150},
-	{"text": "You attend a guest lecture that nobody else knows about. Take another turn.", "type": "extra_turn"},
-	{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"}
+	{"text": "You attend a guest lecture that nobody else knows about. Take another turn.", "type": "extra_turn"}
 ]
 
 const fund_cards := [
@@ -82,103 +81,6 @@ const fund_cards := [
 #FUnction called in Game Controller
 func setup(game_controller_ref: Node3D):
 	gc = game_controller_ref
-
-#function for handling game_state,card draw,type
-func handle_draw_card(player, is_chance):
-	gc.game_state = gc.GameState.TURN_ACTIONS
-	var card_list = chance_cards if is_chance else fund_cards
-	var card_data = card_list.pick_random()
-	gc.ui.show_drawn_card(card_data, is_chance)
-	await gc.ui.card_accepted
-	match card_data["type"]:
-		"negative_dice":
-			player.negative_dice = true
-			gc.show_default_actions()
-			
-		"swap_money":
-				var target_idx: int
-				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
-				target_idx = await gc.ui.target_selected
-				_execute_money_swap(gc.players[gc.current_player], gc.players[target_idx])
-			
-		"swap_property":
-			_start_property_swap()
-			return
-
-		"steal_property":
-			_start_property_steal()
-			return
-			
-		"collect":
-			player.money += card_data["value"]
-			gc.ui.update_ui()
-			gc.show_default_actions()
-			
-		"pay":
-			player.money -= card_data["value"]
-			gc.library_reward += card_data["value"]
-			gc.ui.update_ui()
-			gc.check_liquidation(player)
-			
-		"collect_all":
-			var total_collected = 0
-			for p in gc.players:
-				if p != player and not p.is_bankrupt:
-					p.money -= card_data["value"]
-					total_collected += card_data["value"]
-			player.money += total_collected
-			gc.ui.update_ui()
-			gc.show_default_actions()
-			
-		"pay_all":
-			var total_paid = 0
-			for p in gc.players:
-				if p != player and not p.is_bankrupt:
-					p.money += card_data["value"]
-					total_paid += card_data["value"]
-			player.money -= total_paid
-			gc.ui.update_ui()
-			gc.check_liquidation(player)
-			
-		"move":
-			await player.move_steps(card_data["value"], gc.tiles)
-			gc.resolve_tile(player) 
-			
-		"move_to":
-			var target_idx = int(card_data["target"])
-			if target_idx < player.current_tile and target_idx != 10:
-				print(player.player_name, " passed GO! Collecting 200.")
-				player.money += 200
-				gc.ui.update_ui()
-			
-			player.current_tile = target_idx
-			player.global_position = gc.tiles[target_idx].global_position + Vector3(0, 0.1, 0)
-			player.next_rent_free = card_data.get("rent_free", false) 
-			gc.resolve_tile(player)
-			
-		"go_to_jail":
-			gc.send_to_jail(player)
-			
-		"out_of_jail":
-			player.jail_free_cards += 1
-			gc.ui.update_ui()
-			gc.show_default_actions()
-			
-		"extra_turn":
-			gc.rolled_doubles = true 
-			gc.show_default_actions()
-			
-		"skip_turn":
-			player.skip_turn = true
-			gc.show_default_actions()
-			
-		"skip_other_turn":
-			var target_idx: int
-			gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
-			target_idx = await gc.ui.target_selected
-			_execute_skip_turn(gc.players[target_idx])
-		_: 
-			gc.show_default_actions()
 
 #money swap function
 func _execute_money_swap(p1, p2):
@@ -304,3 +206,113 @@ func _start_property_steal():
 	gc.selected_target_tile = null
 	gc.ui.show_instruction("Select a property to steal!")
 	_update_swap_highlights()
+
+func handle_draw_card(player, is_chance):
+	# Temporarily set the state to an invalid/idle number so the AI does nothing
+	gc.game_state = -1 
+	
+	var card_list = chance_cards if is_chance else fund_cards
+	var card_data = card_list.pick_random()
+	gc.ui.show_drawn_card(card_data, is_chance)
+	
+	# The AI will patiently wait here because the state is -1
+	await gc.ui.card_accepted
+	
+	match card_data["type"]:
+		"swap_money":
+			if player.is_ai:
+				gc.game_state = gc.GameState.SWAP_SELECT_PLAYER
+			else:
+				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
+				var target_idx = await gc.ui.target_selected
+				_execute_money_swap(player, gc.players[target_idx])
+			
+		"swap_property":
+			if player.is_ai:
+				gc.game_state = gc.GameState.SWAP_PROPERTIES
+			else:
+				_start_property_swap()
+
+		"steal_property":
+			if player.is_ai:
+				gc.game_state = gc.GameState.STEAL_PROPERTY
+			else:
+				_start_property_steal()
+				
+		"skip_other_turn":
+			if player.is_ai:
+				gc.game_state = gc.GameState.SKIP_OTHER_TURN
+			else:
+				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
+				var target_idx = await gc.ui.target_selected
+				_execute_skip_turn(gc.players[target_idx])
+			
+		"negative_dice":
+			player.negative_dice = true
+			gc.show_default_actions()
+			
+		"collect":
+			player.money += card_data["value"]
+			gc.ui.update_ui()
+			gc.show_default_actions()
+			
+		"pay":
+			player.money -= card_data["value"]
+			gc.library_reward += card_data["value"]
+			gc.ui.update_ui()
+			gc.check_liquidation(player)
+			
+		"collect_all":
+			var total_collected = 0
+			for p in gc.players:
+				if p != player and not p.is_bankrupt:
+					p.money -= card_data["value"]
+					total_collected += card_data["value"]
+			player.money += total_collected
+			gc.ui.update_ui()
+			gc.show_default_actions()
+			
+		"pay_all":
+			var total_paid = 0
+			for p in gc.players:
+				if p != player and not p.is_bankrupt:
+					p.money += card_data["value"]
+					total_paid += card_data["value"]
+			player.money -= total_paid
+			gc.ui.update_ui()
+			gc.check_liquidation(player)
+			
+		"move":
+			await player.move_steps(card_data["value"], gc.tiles)
+			gc.resolve_tile(player) 
+			
+		"move_to":
+			var target_idx = int(card_data["target"])
+			if target_idx < player.current_tile and target_idx != 10:
+				print(player.player_name, " passed GO! Collecting 200.")
+				player.money += 200
+				gc.ui.update_ui()
+			
+			player.current_tile = target_idx
+			player.global_position = gc.tiles[target_idx].global_position + Vector3(0, 0.1, 0)
+			player.next_rent_free = card_data.get("rent_free", false) 
+			gc.resolve_tile(player)
+			
+		"go_to_jail":
+			gc.send_to_jail(player)
+			
+		"out_of_jail":
+			player.jail_free_cards += 1
+			gc.ui.update_ui()
+			gc.show_default_actions()
+			
+		"extra_turn":
+			gc.rolled_doubles = true 
+			gc.show_default_actions()
+			
+		"skip_turn":
+			player.skip_turn = true
+			gc.show_default_actions()
+		
+		_: 
+			gc.show_default_actions()

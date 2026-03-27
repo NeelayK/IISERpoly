@@ -1,6 +1,3 @@
-#AuctionManager
-#Handles Auction Functionality.
-
 extends Node
 class_name AuctionManager
 
@@ -10,13 +7,15 @@ var ui: CanvasLayer
 var auction_property = null
 var participants = []
 var current_bid = 0
+var gc
 var highest_bidder = null
-var turn_index = 0 # index of players in auction
+var turn_index = 0
 
-func setup(main_ui: CanvasLayer): #Setup funtion called in GC (parent)
+func setup(game_controller, main_ui: CanvasLayer): 
 	ui = main_ui
+	gc = game_controller
 
-func start_auction(property, all_players: Array): #Initial State for Auction
+func start_auction(property, all_players: Array): 
 	auction_property = property
 	participants = all_players.duplicate()
 	current_bid = 0
@@ -24,7 +23,7 @@ func start_auction(property, all_players: Array): #Initial State for Auction
 	turn_index = 0
 	_process_turn()
 
-func _process_turn(): #Continuous State Check for Auction
+func _process_turn(): 
 	if participants.size() == 1 and highest_bidder != null:
 		_end_auction(participants[0])
 		return
@@ -38,13 +37,18 @@ func _process_turn(): #Continuous State Check for Auction
 
 	var bidding_player = participants[turn_index]
 	var minimum_bid = current_bid + 10
+	ui.show_auction_panel(
+		bidding_player, 
+		auction_property, 
+		current_bid, 
+		highest_bidder, 
+		place_bid, 
+		fold_auction
+	)
 
-	if bidding_player.money < minimum_bid:
-		fold_auction()
-		return	
-	ui.show_auction_panel(bidding_player, auction_property, current_bid, highest_bidder, place_bid, fold_auction)
-
-func place_bid(amount: int): #Place Bid
+func place_bid(amount: int): 
+	if participants.is_empty(): return
+	if turn_index >= participants.size(): turn_index = 0
 	var bidding_player = participants[turn_index]
 	if amount <= current_bid or amount > bidding_player.money: return
 
@@ -53,12 +57,17 @@ func place_bid(amount: int): #Place Bid
 	turn_index += 1
 	_process_turn()
 
-func fold_auction(): #Remove Player
+func fold_auction(): 
+	if participants.is_empty(): return
+	if turn_index >= participants.size(): turn_index = 0
+
+
 	participants.remove_at(turn_index)
 	if turn_index >= participants.size():
 		turn_index = 0
 	_process_turn()
 
-func _end_auction(winner): #Function to emit winner [auction_finished(winner,property, bid_value)]
-	ui.hide_auction_panel()
+func _end_auction(winner): 
+	if ui.has_method("hide_auction_panel"):
+		ui.hide_auction_panel()
 	auction_finished.emit(winner, auction_property, current_bid)
