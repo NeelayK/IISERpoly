@@ -57,7 +57,7 @@ signal trade_started(player)
 var panels = []
 var buttons = {}
 var is_mobile:bool = false
-const CHANCE_WAIT := 10
+const CHANCE_WAIT := 2
 
 #initial setup (bid and trade sliders)
 func _ready():
@@ -84,7 +84,7 @@ func setup_players(players):
 		var panel = player_panel_scene.instantiate()
 		panel.get_node("Data/PlayerName").text = players[i].player_name
 		panel.get_node("Data/Money").text = "$" + str(players[i].money)
-		panel.mouse_filter = Control.MOUSE_FILTER_STOP 
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP
 		panel.mouse_entered.connect(_on_panel_mouse_entered.bind(i))
 		panel.mouse_exited.connect(_on_panel_mouse_exited)
 		panel_list.add_child(panel)
@@ -102,7 +102,7 @@ func update_ui():
 		if player.is_bankrupt:
 			money_label.text = "BANKRUPT"
 			money_label.add_theme_color_override("font_color", Color.LIME_GREEN)
-			entry.panel.modulate = Color(0.278, 0.525, 0.714, 0.8) 
+			entry.panel.modulate = Color(0.278, 0.525, 0.714, 0.8)
 		else:
 			money_label.text = "$" + str(player.money)
 			money_label.remove_theme_color_override("font_color")
@@ -143,7 +143,7 @@ func create_button(action_name: String, text: String, fallback_helper: String, c
 		var event = InputEventAction.new()
 		event.action = action_name
 		shortcut.events = [event]
-		btn.shortcut = shortcut 
+		btn.shortcut = shortcut
 		
 	action_container.add_child(btn)
 	buttons[action_name] = btn
@@ -164,19 +164,29 @@ func show_property_buttons(buy_callback: Callable, auction_callback: Callable, c
 
 func show_turn_actions(callbacks: Dictionary, is_liquidation: bool = false):
 	clear_buttons()
-	create_button("action_build", "Invest Funds", "A", callbacks.build)
-	create_button("action_sell", "Take Back Funds", "S", callbacks.sell)
-	create_button("action_mortgage", "Mortgage", "Z", callbacks.mortgage)
-	create_button("action_unmortgage", "Unmortgage", "C", callbacks.unmortgage)
-	create_button("action_trade", "Trade", "X", callbacks.trade)
-	
+	if callbacks.has("build") and not is_liquidation:
+		create_button("action_build", "Invest Funds", "A", callbacks["build"])
+		
+	if callbacks.has("sell"):
+		create_button("action_sell", "Take Back Funds", "S", callbacks["sell"])
+		
+	if callbacks.has("mortgage"):
+		create_button("action_mortgage", "Mortgage", "Z", callbacks["mortgage"])
+		
+	if callbacks.has("unmortgage"):
+		create_button("action_unmortgage", "Unmortgage", "C", callbacks["unmortgage"])
+		
+	if callbacks.has("trade") and not is_liquidation:
+		create_button("action_trade", "Trade", "X", callbacks["trade"])
+ 
 	var end_label = "Give Up (Bankrupt)" if is_liquidation else "End Turn"
-	create_button("action_end_turn", end_label, "Space", callbacks.end_turn)
+	if callbacks.has("end_turn"):
+		create_button("action_end_turn", end_label, "Space", callbacks["end_turn"])
 
 func show_jail_buttons(pay_callback, card_callback, roll_callback, can_pay, has_card):
 	clear_buttons()
 	create_button("action_jail_roll", "Roll for Doubles", "Space", roll_callback)
-	if has_card: 
+	if has_card:
 		create_button("action_jail_card", "Use Humanities Pass", "C", card_callback)
 	create_button("action_jail_pay", "Pay $50 Fine", "X", pay_callback)
 	if not can_pay:
@@ -279,7 +289,7 @@ func show_drawn_card(card_data: Dictionary, is_chance: bool):
 	var i = CHANCE_WAIT
 	while i > 0:
 		await get_tree().create_timer(1.0).timeout
-		i=i-1 
+		i=i-1
 		card_panel_button.text = "OK (" + str(i)+")"
 	emit_signal("card_accepted")
 	CardPanel.visible = false
@@ -313,16 +323,16 @@ func show_target_selector(players: Array, current_idx: int, instruction_text: St
 	$VictimPanel.visible = true
 	$VictimPanel/Instructions.text = instruction_text
 	
-	for child in target_menu.get_children(): 
+	for child in target_menu.get_children():
 		child.queue_free()
 	
 	for i in range(players.size()):
-		if i == current_idx or players[i].is_bankrupt: 
+		if i == current_idx or players[i].is_bankrupt:
 			continue
 		
 		var btn = Button.new()
 		btn.text = players[i].player_name
-		btn.pressed.connect(func(): 
+		btn.pressed.connect(func():
 			$VictimPanel.visible = false
 			target_selected.emit(i)
 		)
@@ -332,12 +342,12 @@ func show_target_selector(players: Array, current_idx: int, instruction_text: St
 func show_instruction(instruction_text: String):
 	$VictimPanel.visible = true
 	$VictimPanel/Instructions.text = instruction_text
-	for child in target_menu.get_children(): 
+	for child in target_menu.get_children():
 		child.queue_free()
 
 #creates a new button to hide victim panel
 func show_confirm_button(button_text: String, callback: Callable):
-	for child in target_menu.get_children(): 
+	for child in target_menu.get_children():
 		child.queue_free()
 		
 	var btn = Button.new()
@@ -351,7 +361,7 @@ func show_confirm_button(button_text: String, callback: Callable):
 #this function hides victim and terminates children
 func hide_instruction():
 	$VictimPanel.visible = false
-	for child in target_menu.get_children(): 
+	for child in target_menu.get_children():
 		child.queue_free()
 
 
@@ -363,16 +373,16 @@ func trade_selector(players: Array, current_idx: int):
 	$VictimPanel.visible = true
 	$VictimPanel/Instructions.text = "Select Player You Want to Trade With:"
 	
-	for child in target_menu.get_children(): 
+	for child in target_menu.get_children():
 		child.queue_free()
 	
 	for i in range(players.size()):
-		if i == current_idx or players[i].is_bankrupt: 
+		if i == current_idx or players[i].is_bankrupt:
 			continue
 		
 		var btn = Button.new()
 		btn.text = "Trade with " + players[i].player_name
-		btn.pressed.connect(func(): 
+		btn.pressed.connect(func():
 			$VictimPanel.visible = false
 			current_trade["p2"]=players[i]
 			current_trade["p1"]=players[current_idx]
@@ -488,7 +498,7 @@ func _input(event):
 			
 func change_time():
 	if Engine.time_scale == 1:
-		Engine.time_scale = 200
+		Engine.time_scale = 2
 		speed_up.text = "x2"
 	else:
 		Engine.time_scale = 1

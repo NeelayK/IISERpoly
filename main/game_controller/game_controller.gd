@@ -6,10 +6,11 @@ extends Node3D
 @export var board_state : Node
 @export var ui : CanvasLayer
 @export var camera_rig : Node3D
+@export var ai_controller: PackedScene
 @onready var auction_manager = $AuctionManager
 @onready var property_manager = $PropertyManager
 @onready var card_manager = $CardManager
-@onready var ai_manager = $AIManager
+@onready var ai_manager =  $AIManager
 
 #Constants
 var  PLAYER_COUNT = GameConfig.player_data.size()
@@ -40,6 +41,7 @@ var game_started := false
 var library_reward := 0
 var is_reviewing_trade := false
 @export var ai_controllers: Array[MonopolyAIController]
+var active_ai_controllers: Array[MonopolyAIController] = []
 
 #INITIALIZATION: setup children, connect ui functions
 func _ready():
@@ -48,34 +50,45 @@ func _ready():
 	auction_manager.auction_finished.connect(_on_auction_finished)
 	property_manager.setup(board_state)
 	card_manager.setup(self)
-	setup_ai_players()
 	ui.player_hovered.connect(_on_player_ui_hovered)
 	ui.player_unhovered.connect(_on_player_ui_unhovered)
-	
-	tiles = board_state.get_tiles()
-	for t in tiles:
-		t.tile_clicked.connect(_on_tile_clicked)
-	spawn_players()
-	ui.setup_players(players)
-	
 	dice_controller.connect("dice_result", _on_dice_result)
 	ui.trade_accepted.connect(_on_trade_button_pressed)
 	ui.trade_cancelled.connect(_cancel_trade)
 	ui.trade_started.connect(func(player): start_trade_with(player))
+	tiles = board_state.get_tiles()
+	for t in tiles:
+		t.tile_clicked.connect(_on_tile_clicked)
+	for t in tiles: t.set_highlight(false)
 	
+	spawn_players()
+	setup_ai_players()
+	ui.setup_players(players)
+	
+	var sync_node = get_tree().get_first_node_in_group("rl_sync")
+	if not sync_node:
+		sync_node = find_child("Sync")
+	
+	if sync_node:
+		sync_node._initialize()
+		print("[DEBUG] Sync node initialized. Waiting for Python...")
+	else:
+		push_error("Sync node not found! Make sure it's in the scene.")
+
+# Only start the turn AFTER the sync is ready
 	if players.size() > 0:
 		start_turn()
-	else:
-		push_error("No players found in GameConfig.")
 	game_started = true
-	for t in tiles: t.set_highlight(false)
-
 func setup_ai_players():
-	for i in range(ai_controllers.size()):
-		var controller = ai_controllers[i]
-		var target_player = players[i]
-		controller.setup(self, target_player)
-		controller.add_to_group("agent")
+	active_ai_controllers.clear()
+	for player in players:
+		if player.is_ai:
+			var controller = ai_controller.instantiate() as MonopolyAIController
+			ai_manager.add_child(controller)
+			controller.setup(self, player)
+			active_ai_controllers.append(controller)
+			controller.add_to_group("agent")
+			print("Spawned AI Controller for: ", player.player_name)
 
 func _on_player_move_finished():
 	for tile_idx in range(tiles.size()):
@@ -141,7 +154,6 @@ func start_turn():
 	
 	if player.is_ai:
 		if current_turn_token != turn_id: return
-		game_state = GameState.TURN_ACTIONS
 	else:
 		if player.is_in_jail:
 			var can_pay = player.money >= JAIL_FINE

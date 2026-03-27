@@ -1,8 +1,8 @@
 import os
-from godot_rl.envs.godot_env import GodotEnv
+from godot_rl.wrappers.stable_baselines_wrapper import StableBaselinesGodotEnv
 from stable_baselines3 import PPO
 
-env = GodotEnv(env_path=None, show_window=True, speedup=8)
+env = StableBaselinesGodotEnv(env_path=None, show_window=True, speedup=8)
 
 model = PPO(
     "MultiInputPolicy",
@@ -21,9 +21,7 @@ try:
 except KeyboardInterrupt:
     print("--- Training Interrupted: Saving progress... ---")
 
-# 4. SAVE THE BRAIN
 model.save("monopoly_ai_brain")
 print("Model saved as 'monopoly_ai_brain.zip'")
 
-# Close the connection
 env.close()

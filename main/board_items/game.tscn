@@ -11,8 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://bvppo81bfjnr3" path="res://main/board_items/player.tscn" id="6_iph2q"]
 [ext_resource type="Script" uid="uid://ca3r4bqeum6d4" path="res://main/game_controller/auction_manager.gd" id="8_wcq3i"]
 [ext_resource type="Script" uid="uid://dfy7ak7bawpqf" path="res://main/game_controller/property_manager.gd" id="9_4ijfq"]
+[ext_resource type="PackedScene" uid="uid://byntux5b1ue5w" path="res://main/game_controller/ai_controller.tscn" id="9_fcet5"]
 [ext_resource type="Script" uid="uid://cve7iud4b7ck" path="res://main/board/card_manager.gd" id="10_3lxql"]
-[ext_resource type="Script" uid="uid://o422jdawca6p" path="res://main/game_controller/AI_manager.gd" id="12_ysp8t"]
 [ext_resource type="Script" uid="uid://bfkxeaydd1sc1" path="res://main/ui/camera_rig.gd" id="15_sveyw"]
 [ext_resource type="PackedScene" uid="uid://dfgdebdcat2yf" path="res://main/ui/auction_panel.tscn" id="15_wcq3i"]
 [ext_resource type="Script" uid="uid://2mhklwmigp76" path="res://main/ui/ui.gd" id="15_xug3m"]
@@ -62,11 +62,6 @@ ssao_intensity = 1.5
 [node name="Game" type="Node3D" unique_id=1361872469]
 script = ExtResource("1_8nvx8")
 
-[node name="Sync" type="Node" parent="." unique_id=1323663328]
-script = ExtResource("2_fcet5")
-action_repeat = 1
-metadata/_custom_type_script = "uid://mb8r3x2s1h3x"
-
 [node name="Board" type="Node3D" parent="." unique_id=154058985]
 script = ExtResource("1_ey7ds")
 tile_scene = ExtResource("2_514y6")
@@ -87,6 +82,7 @@ dice_controller = NodePath("../DiceManager")
 board_state = NodePath("../Board/BoardState")
 ui = NodePath("../UI")
 camera_rig = NodePath("../CameraRIG")
+ai_controller = ExtResource("9_fcet5")
 
 [node name="AuctionManager" type="Node3D" parent="GameController" unique_id=1801874946]
 script = ExtResource("8_wcq3i")
@@ -97,9 +93,7 @@ script = ExtResource("9_4ijfq")
 [node name="CardManager" type="Node3D" parent="GameController" unique_id=1144084039]
 script = ExtResource("10_3lxql")
 
-[node name="AIManager" type="Node3D" parent="GameController" unique_id=70696996]
-script = ExtResource("12_ysp8t")
-metadata/_custom_type_script = "uid://ckdtmuiu4jjpv"
+[node name="AIManager" type="Node3D" parent="GameController" unique_id=136790649]
 
 [node name="Environment" type="Node3D" parent="." unique_id=1011231608]
 
@@ -483,5 +477,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55025, 0)
 [node name="PlayerAnchor" type="Node3D" parent="CameraRIG" unique_id=470789046]
 
 [node name="FreeAnchor" type="Node3D" parent="CameraRIG" unique_id=1018399853]
+
+[node name="Sync" type="Node" parent="." unique_id=871051146 groups=["rl_sync"]]
+process_mode = 3
+script = ExtResource("2_fcet5")
+action_repeat = 1
+metadata/_custom_type_script = "uid://mb8r3x2s1h3x"
 
 [connection signal="pressed" from="UI/CardPanel/VBoxContainer/AcceptButton" to="UI" method="_on_accept_button_pressed"]

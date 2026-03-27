@@ -47,6 +47,8 @@ func _process_turn():
 	)
 
 func place_bid(amount: int): 
+	if participants.is_empty(): return
+	if turn_index >= participants.size(): turn_index = 0
 	var bidding_player = participants[turn_index]
 	if amount <= current_bid or amount > bidding_player.money: return
 
@@ -56,6 +58,10 @@ func place_bid(amount: int):
 	_process_turn()
 
 func fold_auction(): 
+	if participants.is_empty(): return
+	if turn_index >= participants.size(): turn_index = 0
+
+
 	participants.remove_at(turn_index)
 	if turn_index >= participants.size():
 		turn_index = 0

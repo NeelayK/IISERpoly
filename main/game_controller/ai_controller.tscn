@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://byntux5b1ue5w"]
+
+[ext_resource type="Script" uid="uid://o422jdawca6p" path="res://main/game_controller/AI_manager.gd" id="1_qahoh"]
+
+[node name="AIController" type="Node3D" unique_id=150678388]
+script = ExtResource("1_qahoh")
+metadata/_custom_type_script = "uid://ckdtmuiu4jjpv"

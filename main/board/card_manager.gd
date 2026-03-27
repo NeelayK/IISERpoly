@@ -8,11 +8,11 @@ var gc : Node3D
 #region Card Data
 
 const chance_cards := [
-	#{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
-	#{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
-	#{"text": "Massive banking error! Swap your exact money balance with a player of your choice.", "type": "swap_money"},
-	#{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
-	#{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"},
+	{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
+	{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
+	{"text": "Massive banking error! Swap your exact money balance with a player of your choice.", "type": "swap_money"},
+	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
+	{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"},
 	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
 	{"text": "Director catches you for not walking on the footpath. Go back 3 spaces.", "type": "move", "value": -3},
 	{"text": "You bunk classes. Advance to the Library and collect the library reward.", "type": "move_to", "target": 20},
@@ -207,18 +207,21 @@ func _start_property_steal():
 	gc.ui.show_instruction("Select a property to steal!")
 	_update_swap_highlights()
 
-
 func handle_draw_card(player, is_chance):
-	gc.game_state = gc.GameState.TURN_ACTIONS
+	# Temporarily set the state to an invalid/idle number so the AI does nothing
+	gc.game_state = -1 
+	
 	var card_list = chance_cards if is_chance else fund_cards
 	var card_data = card_list.pick_random()
 	gc.ui.show_drawn_card(card_data, is_chance)
+	
+	# The AI will patiently wait here because the state is -1
 	await gc.ui.card_accepted
 	
 	match card_data["type"]:
 		"swap_money":
 			if player.is_ai:
-				gc.GameState = gc.GameState.SWAP_SELECT_PLAYER
+				gc.game_state = gc.GameState.SWAP_SELECT_PLAYER
 			else:
 				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player to swap bank balances with:")
 				var target_idx = await gc.ui.target_selected
@@ -226,19 +229,19 @@ func handle_draw_card(player, is_chance):
 			
 		"swap_property":
 			if player.is_ai:
-				gc.GameState = gc.GameState.SWAP_PROPERTIES
+				gc.game_state = gc.GameState.SWAP_PROPERTIES
 			else:
 				_start_property_swap()
 
 		"steal_property":
 			if player.is_ai:
-				gc.GameState = gc.GameState.STEAL_PROPERTY
+				gc.game_state = gc.GameState.STEAL_PROPERTY
 			else:
 				_start_property_steal()
 				
 		"skip_other_turn":
 			if player.is_ai:
-				gc.GameState = gc.GameState.SKIP_OTHER_TURN
+				gc.game_state = gc.GameState.SKIP_OTHER_TURN
 			else:
 				gc.ui.show_target_selector(gc.players, gc.current_player, "Select a player who will skip a turn:")
 				var target_idx = await gc.ui.target_selected
