@@ -49,13 +49,26 @@ func _process_turn():
 func place_bid(amount: int): 
 	if participants.is_empty(): return
 	if turn_index >= participants.size(): turn_index = 0
+	
 	var bidding_player = participants[turn_index]
+	
 	if amount <= current_bid or amount > bidding_player.money: return
+
+	if bidding_player.is_ai:
+		# 1. Use find_child to be safe, or check the exact name in your scene tree
+		var ai_controller = bidding_player.find_child("AIController3D", true, false)
+		
+		if ai_controller:
+			var fair_price = auction_property.tile_data.get("price", 100)
+			if amount > fair_price * 1.2:
+				# 2. Penalty for overbidding
+				ai_controller.reward -= (amount - fair_price) * 0.01 
 
 	current_bid = amount
 	highest_bidder = bidding_player
 	turn_index += 1
 	_process_turn()
+	
 
 func fold_auction(): 
 	if participants.is_empty(): return

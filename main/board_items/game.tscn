@@ -6,54 +6,20 @@
 [ext_resource type="Script" uid="uid://mb8r3x2s1h3x" path="res://addons/godot_rl_agents/sync.gd" id="2_fcet5"]
 [ext_resource type="Script" uid="uid://t7a83a20bydn" path="res://main/board_items/dice_manager.gd" id="3_6d5ub"]
 [ext_resource type="Script" uid="uid://y1v1yfpxwe2y" path="res://main/board/board_state.gd" id="3_xyq2n"]
-[ext_resource type="PackedScene" uid="uid://d0gtlpkjl2ysl" path="res://main/board_items/dice.tscn" id="4_nyh1f"]
 [ext_resource type="Script" uid="uid://pun3mtk0ai35" path="res://main/game_controller/game_controller.gd" id="5_lrx66"]
 [ext_resource type="PackedScene" uid="uid://bvppo81bfjnr3" path="res://main/board_items/player.tscn" id="6_iph2q"]
 [ext_resource type="Script" uid="uid://ca3r4bqeum6d4" path="res://main/game_controller/auction_manager.gd" id="8_wcq3i"]
 [ext_resource type="Script" uid="uid://dfy7ak7bawpqf" path="res://main/game_controller/property_manager.gd" id="9_4ijfq"]
 [ext_resource type="PackedScene" uid="uid://byntux5b1ue5w" path="res://main/game_controller/ai_controller.tscn" id="9_fcet5"]
 [ext_resource type="Script" uid="uid://cve7iud4b7ck" path="res://main/board/card_manager.gd" id="10_3lxql"]
-[ext_resource type="Script" uid="uid://bfkxeaydd1sc1" path="res://main/ui/camera_rig.gd" id="15_sveyw"]
 [ext_resource type="PackedScene" uid="uid://dfgdebdcat2yf" path="res://main/ui/auction_panel.tscn" id="15_wcq3i"]
 [ext_resource type="Script" uid="uid://2mhklwmigp76" path="res://main/ui/ui.gd" id="15_xug3m"]
 [ext_resource type="PackedScene" uid="uid://dspm7kjffpwnl" path="res://main/ui/player_hud.tscn" id="16_sveyw"]
-[ext_resource type="Texture2D" uid="uid://xllxyeon5grd" path="res://materials/Dice/Poliigon_PlasticMoldWorn_7486_Roughness.jpg" id="17_021v2"]
 [ext_resource type="PackedScene" uid="uid://bwfrpoqso0ifx" path="res://main/ui/action_button.tscn" id="17_wcq3i"]
-[ext_resource type="Texture2D" uid="uid://da2lxtjpsj1u6" path="res://materials/HDRI/hdri.hdr" id="18_8nvx8"]
 [ext_resource type="StyleBox" uid="uid://cv7n13qwfbo24" path="res://materials/themes/panel_theme.tres" id="25_x7q1m"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kwtg8"]
-transparency = 1
-albedo_color = Color(0, 0, 0, 0.90588236)
-metallic = 0.1
-metallic_specular = 1.0
-roughness = 0.0
-roughness_texture = ExtResource("17_021v2")
-refraction_enabled = true
-refraction_scale = 0.04
-uv1_scale = Vector3(3, 3, 3)
-disable_receive_shadows = true
 
 [sub_resource type="BoxMesh" id="BoxMesh_kwtg8"]
 size = Vector3(15.3, 0.2, 15.3)
-
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_x7q1m"]
-panorama = ExtResource("18_8nvx8")
-
-[sub_resource type="Sky" id="Sky_021v2"]
-sky_material = SubResource("PanoramaSkyMaterial_x7q1m")
-
-[sub_resource type="Environment" id="Environment_fvged"]
-background_mode = 2
-background_energy_multiplier = 0.5
-sky = SubResource("Sky_021v2")
-sky_rotation = Vector3(-0.57595867, -1.7662733, -5.5588737)
-ambient_light_source = 3
-ambient_light_energy = 0.6
-tonemap_mode = 3
-ssr_enabled = true
-ssr_max_steps = 32
-ssao_intensity = 1.5
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_hckit"]
 
@@ -73,15 +39,13 @@ script = ExtResource("3_xyq2n")
 
 [node name="DiceManager" type="Node3D" parent="." unique_id=801625166]
 script = ExtResource("3_6d5ub")
-dice_scene = ExtResource("4_nyh1f")
 
-[node name="GameController" type="Node3D" parent="." unique_id=1494712387 node_paths=PackedStringArray("dice_controller", "board_state", "ui", "camera_rig")]
+[node name="GameController" type="Node3D" parent="." unique_id=1494712387 node_paths=PackedStringArray("dice_controller", "board_state", "ui")]
 script = ExtResource("5_lrx66")
 player_scene = ExtResource("6_iph2q")
 dice_controller = NodePath("../DiceManager")
 board_state = NodePath("../Board/BoardState")
 ui = NodePath("../UI")
-camera_rig = NodePath("../CameraRIG")
 ai_controller = ExtResource("9_fcet5")
 
 [node name="AuctionManager" type="Node3D" parent="GameController" unique_id=1801874946]
@@ -99,11 +63,7 @@ script = ExtResource("10_3lxql")
 
 [node name="Board" type="MeshInstance3D" parent="Environment" unique_id=1852065267]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15097189, 0)
-material_override = SubResource("StandardMaterial3D_kwtg8")
 mesh = SubResource("BoxMesh_kwtg8")
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=1723087591]
-environment = SubResource("Environment_fvged")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Environment" unique_id=1591738255]
 visible = false
@@ -112,15 +72,6 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.037137747, 0)
 shape = SubResource("WorldBoundaryShape3D_hckit")
 debug_color = Color(0.98805624, 0, 0.31137228, 0.41960785)
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=116492737]
-transform = Transform3D(0.15203944, 0.5280303, 0.83550465, -0.2931884, -0.78318965, 0.54832, 0.94388795, -0.32832655, 0.035736725, 0, 6.098528, 0)
-shadow_enabled = true
-
-[node name="ReflectionProbe" type="ReflectionProbe" parent="Environment" unique_id=1036095399]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4750366, 0)
-size = Vector3(20, 5.5809326, 20)
-interior = true
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1600656523 node_paths=PackedStringArray("CardPanel")]
 script = ExtResource("15_xug3m")
@@ -466,22 +417,14 @@ offset_right = 156.0
 offset_bottom = 52.0
 text = "Cam"
 
-[node name="CameraRIG" type="Node3D" parent="." unique_id=429319313]
-script = ExtResource("15_sveyw")
-
-[node name="Camera3D" type="Camera3D" parent="CameraRIG" unique_id=938541942]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55025, 0)
-
-[node name="DiceAnchor" type="Node3D" parent="CameraRIG" unique_id=1598576009]
-
-[node name="PlayerAnchor" type="Node3D" parent="CameraRIG" unique_id=470789046]
-
-[node name="FreeAnchor" type="Node3D" parent="CameraRIG" unique_id=1018399853]
-
 [node name="Sync" type="Node" parent="." unique_id=871051146 groups=["rl_sync"]]
 process_mode = 3
 script = ExtResource("2_fcet5")
 action_repeat = 1
+speed_up = 4.0
 metadata/_custom_type_script = "uid://mb8r3x2s1h3x"
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1511803141]
+transform = Transform3D(1, 0, 0, 0, 0.9016288, 0.43251067, 0, -0.43251067, 0.9016288, 0, 6.4781857, 13.289534)
 
 [connection signal="pressed" from="UI/CardPanel/VBoxContainer/AcceptButton" to="UI" method="_on_accept_button_pressed"]

@@ -2,7 +2,7 @@ import os
 from godot_rl.wrappers.stable_baselines_wrapper import StableBaselinesGodotEnv
 from stable_baselines3 import PPO
 
-LOAD_MODEL = False
+LOAD_MODEL = True
 MODEL_PATH = "monopoly_ai_brain.zip" 
 
 env = StableBaselinesGodotEnv(env_path=None, show_window=True, speedup=64)

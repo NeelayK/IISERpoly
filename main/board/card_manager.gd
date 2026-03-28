@@ -3,14 +3,13 @@ extends Node3D
 var gc : Node3D
 @onready var board_state := $"../../Board/BoardState"
 @onready var ui := $"../../UI"
-@onready var camera :=$"../../CameraRIG"
 
 #region Card Data
 
 const chance_cards := [
 	{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
 	{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
-	{"text": "Massive banking error! Swap your exact money balance with a player of your choice.", "type": "swap_money"},
+	{"text": "Massive banking error! Get 25% money balance with a player of your choice.", "type": "swap_money"},
 	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
 	{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"},
 	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
@@ -84,9 +83,9 @@ func setup(game_controller_ref: Node3D):
 
 #money swap function
 func _execute_money_swap(p1, p2):
-	var temp_money = p1.money
-	p1.money = p2.money
-	p2.money = temp_money
+	var money_amount:int = (p2.money)/5
+	p1.money += money_amount
+	p2.money -= money_amount
 	gc.ui.update_ui()
 	gc.show_default_actions()
 
@@ -171,9 +170,7 @@ func complete_action():
 #setup for swap state
 func _start_property_swap():
 	var player = gc.players[gc.current_player]
-	camera.enable_tabletop_pan(player.global_position)
 	if player.properties.size() == 0:
-		print("You have no properties to swap.")
 		gc.show_default_actions()
 		return
 		
@@ -187,7 +184,6 @@ func _start_property_swap():
 				break
 				
 	if not has_valid_targets:
-		print("No valid targets to swap with.")
 		gc.show_default_actions()
 		return
 
@@ -201,22 +197,15 @@ func _start_property_swap():
 func _start_property_steal():
 	#var player = gc.players[gc.current_player]
 	gc.game_state = gc.GameState.STEAL_PROPERTY
-	camera.enable_tabletop_pan(gc.players[gc.current_player].global_position)
 	gc.selected_own_tile = null
 	gc.selected_target_tile = null
 	gc.ui.show_instruction("Select a property to steal!")
 	_update_swap_highlights()
 
 func handle_draw_card(player, is_chance):
-	# Temporarily set the state to an invalid/idle number so the AI does nothing
-	gc.game_state = -1 
 	
 	var card_list = chance_cards if is_chance else fund_cards
 	var card_data = card_list.pick_random()
-	gc.ui.show_drawn_card(card_data, is_chance)
-	
-	# The AI will patiently wait here because the state is -1
-	await gc.ui.card_accepted
 	
 	match card_data["type"]:
 		"swap_money":
@@ -289,7 +278,6 @@ func handle_draw_card(player, is_chance):
 		"move_to":
 			var target_idx = int(card_data["target"])
 			if target_idx < player.current_tile and target_idx != 10:
-				print(player.player_name, " passed GO! Collecting 200.")
 				player.money += 200
 				gc.ui.update_ui()
 			

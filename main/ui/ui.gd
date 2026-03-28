@@ -57,7 +57,7 @@ signal trade_started(player)
 var panels = []
 var buttons = {}
 var is_mobile:bool = false
-const CHANCE_WAIT := 2
+const CHANCE_WAIT := 0
 
 #initial setup (bid and trade sliders)
 func _ready():
@@ -128,7 +128,6 @@ func create_button(action_name: String, text: String, fallback_helper: String, c
 			if events.size() > 0:
 				var helper_text = events[0].as_text().get_slice(" (", 0)
 				helper_label.text = helper_text.replace(" - Physical", "")
-				print(helper_label.text)
 				
 			else:
 				helper_label.text = fallback_helper
@@ -286,11 +285,6 @@ func show_drawn_card(card_data: Dictionary, is_chance: bool):
 	title.text = "CHANCE" if is_chance else "PROJECT FUNDS"
 	desc.text = card_data["text"]
 	CardPanel.modulate = Color.PLUM if is_chance else Color.LIGHT_CORAL
-	var i = CHANCE_WAIT
-	while i > 0:
-		await get_tree().create_timer(1.0).timeout
-		i=i-1
-		card_panel_button.text = "OK (" + str(i)+")"
 	emit_signal("card_accepted")
 	CardPanel.visible = false
 
@@ -498,7 +492,7 @@ func _input(event):
 			
 func change_time():
 	if Engine.time_scale == 1:
-		Engine.time_scale = 2
+		Engine.time_scale = 4
 		speed_up.text = "x2"
 	else:
 		Engine.time_scale = 1

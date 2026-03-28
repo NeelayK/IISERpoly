@@ -78,24 +78,27 @@ func get_obs() -> Dictionary:
 			obs.append_array([0.0, 0.0, 0.0, 0.0])
 
 	for t in gc.tiles:
-		if t.tile_owner == my_player:
-			obs.append(1.0)
-		elif t.tile_owner == null:
-			obs.append(0.0)
-		else:
-			obs.append(-1.0)
+			if t.tile_owner == my_player:
+				obs.append(1.0)
+			elif t.tile_owner == null:
+				obs.append(0.0)
+			else:
+				obs.append(-1.0)
+					
+			var is_mort = t.get("is_mortgaged")
+			obs.append(1.0 if is_mort == true else 0.0)
 				
-		var is_mort = t.get("is_mortgaged")
-		obs.append(1.0 if is_mort == true else 0.0)
-			
-		var houses = t.get("house_count")
-		if houses != null:
-			obs.append(float(houses) / 5.0)
-		else:
-			obs.append(0.0)
-				
-		var is_mono = t.get("is_monopoly")
-		obs.append(1.0 if is_mono == true else 0.0)
+			# --- CHANGE THIS SECTION ---
+			var funding_level = t.get("funding")
+			if funding_level != null:
+				# Assuming 5 is your max funding/house level. Adjust if different!
+				obs.append(float(funding_level) / 5.0) 
+			else:
+				obs.append(0.0)
+			# ---------------------------
+					
+			var is_mono = t.get("is_monopoly")
+			obs.append(1.0 if is_mono == true else 0.0)
 
 	return {"obs": obs}
 
@@ -129,6 +132,17 @@ func set_action(action: Dictionary) -> void:
 	var is_my_turn = (gc.players[gc.current_player] == my_player)
 	
 	match act_type:
+		Actions.BUILD_HOUSE:
+			if is_my_turn and gc.game_state == gc.GameState.TURN_ACTIONS:
+				# You'll need to pass the target property index. 
+				# Re-using give_prop_idx as the target property for the build action:
+				if give_prop_idx < gc.tiles.size():
+					gc.ai_build_house(my_player, gc.tiles[give_prop_idx]) # Replace with your actual GameController function
+
+		Actions.MORTGAGE_TOGGLE:
+			if is_my_turn and gc.game_state == gc.GameState.TURN_ACTIONS:
+				if give_prop_idx < gc.tiles.size():
+					reward += gc.ai_toggle_mortgage(my_player, gc.tiles[give_prop_idx]) # Replace with your actual GameController function
 		Actions.DO_NOTHING:
 			pass
 			
@@ -139,19 +153,36 @@ func set_action(action: Dictionary) -> void:
 		Actions.BUY_PROPERTY:
 			if is_my_turn and gc.game_state == gc.GameState.PROPERTY_DECISION:
 				gc._buy_property()
+				reward += 0.1
 				
 		Actions.AUCTION_PROPERTY:
 			if is_my_turn and gc.game_state == gc.GameState.PROPERTY_DECISION:
 				gc._start_auction()
 				
 		Actions.PLACE_BID:
-					if gc.game_state == gc.GameState.AUCTION and not gc.auction_manager.participants.is_empty():
-						# --- NEW SAFETY CHECK HERE ---
-						if gc.auction_manager.turn_index < gc.auction_manager.participants.size():
-							var active_bidder = gc.auction_manager.participants[gc.auction_manager.turn_index]
-							if my_player == active_bidder:
-								var bid_amt = max(gc.auction_manager.current_bid + 1, int(bid_ratio * my_player.money))
+			if gc.game_state != gc.GameState.AUCTION:
+				# Penalize the AI for trying to bid when no auction is happening
+				reward -= 0.1 
+				return
+			if gc.game_state == gc.GameState.AUCTION and gc.auction_manager.auction_property != null:
+				if gc.auction_manager.turn_index < gc.auction_manager.participants.size():
+					var active_bidder = gc.auction_manager.participants[gc.auction_manager.turn_index]
+					
+					if my_player == active_bidder:
+						var prop_val = gc.auction_manager.auction_property.tile_data.get("price", 100)
+						var max_val_i_will_pay = prop_val * (0.5 + bid_ratio) 
+						
+						if gc.auction_manager.current_bid < max_val_i_will_pay:
+							var bid_amt = gc.auction_manager.current_bid + 10
+							
+							bid_amt = min(bid_amt, my_player.money)
+							
+							if bid_amt > gc.auction_manager.current_bid:
 								gc.auction_manager.place_bid(bid_amt)
+							else:
+								gc.auction_manager.fold_auction()
+						else:
+							gc.auction_manager.fold_auction()
 				
 		Actions.FOLD_AUCTION:
 			if gc.game_state == gc.GameState.AUCTION and not gc.auction_manager.participants.is_empty():
@@ -165,13 +196,6 @@ func set_action(action: Dictionary) -> void:
 			if is_my_turn and gc.game_state == gc.GameState.TURN_ACTIONS:
 				gc._end_turn()
 				
-		Actions.PROPOSE_TRADE:
-			if is_my_turn and gc.game_state == gc.GameState.TURN_ACTIONS and gc.trade_requests < MAX_TRADES_PER_ROUND:
-				if target_p_idx >= 0 and target_p_idx < gc.players.size():
-					var offer_cash_amount = int(offer_cash_ratio * my_player.money)
-					var demand_cash_amount = int(demand_cash_ratio * gc.players[target_p_idx].money)
-					gc.ai_propose_trade(target_p_idx, give_prop_idx, take_prop_idx, offer_cash_amount, demand_cash_amount)
-						
 		Actions.ACCEPT_TRADE:
 			if gc.is_reviewing_trade and gc.ui.current_trade.p2 == my_player:
 				gc._execute_trade()
@@ -186,22 +210,58 @@ func set_action(action: Dictionary) -> void:
 
 		Actions.SWAP_MONEY:
 			if is_my_turn and gc.game_state == gc.GameState.SWAP_SELECT_PLAYER:
+						# Execute if valid
 				if target_p_idx >= 0 and target_p_idx < gc.players.size() and target_p_idx != gc.current_player:
 					gc._execute_money_swap(my_player, gc.players[target_p_idx])
-					gc.game_state = gc.GameState.TURN_ACTIONS
-					
+						# CRITICAL: Always advance the state to prevent infinite loops!
+				gc.game_state = gc.GameState.TURN_ACTIONS
+							
 		Actions.SWAP_PROPERTY:
 			if is_my_turn and gc.game_state == gc.GameState.SWAP_PROPERTIES:
-				if target_p_idx >= 0 and target_p_idx < gc.players.size():
+				if target_p_idx >= 0 and target_p_idx < gc.players.size() and target_p_idx != gc.current_player:
 					gc._execute_property_swap(my_player, gc.tiles[give_prop_idx], gc.players[target_p_idx], gc.tiles[take_prop_idx])
-					gc.game_state = gc.GameState.TURN_ACTIONS
+				gc.game_state = gc.GameState.TURN_ACTIONS # Always advance
 
 		Actions.STEAL_PROPERTY:
 			if is_my_turn and gc.game_state == gc.GameState.STEAL_PROPERTY:
-				if target_p_idx >= 0 and target_p_idx < gc.players.size():
+				if target_p_idx >= 0 and target_p_idx < gc.players.size() and target_p_idx != gc.current_player:
 					gc._execute_property_steal(my_player, gc.players[target_p_idx], gc.tiles[take_prop_idx])
-					gc.game_state = gc.GameState.TURN_ACTIONS
-
+				gc.game_state = gc.GameState.TURN_ACTIONS # Always advance
+						
+		Actions.PROPOSE_TRADE:
+			if is_my_turn and gc.game_state == gc.GameState.TURN_ACTIONS and gc.trade_requests < MAX_TRADES_PER_ROUND:
+				
+				# 1. FORCE index into valid range (Sanitization)
+				# This prevents the "Index 3 on Array of size 2" crash.
+				var p_count = gc.players.size()
+				target_p_idx = int(target_p_idx) % p_count 
+				
+				# 2. Safety Loop: Skip self and bankrupt players
+				# We add a 'safety_counter' to prevent infinite loops if only 1 player remains
+				var safety_counter = 0
+				while (target_p_idx == gc.current_player or gc.players[target_p_idx].is_bankrupt) and safety_counter < p_count:
+					target_p_idx = (target_p_idx + 1) % p_count
+					safety_counter += 1
+				
+				# 3. Double-check we found a valid target that isn't us
+# Inside Actions.PROPOSE_TRADE:
+				if target_p_idx != gc.current_player and not gc.players[target_p_idx].is_bankrupt:
+					var target_player = gc.players[target_p_idx]
+					
+					# Anchor to the actual value of the properties being traded!
+					var property_i_want = gc.tiles[take_prop_idx]
+					var fair_value = property_i_want.tile_data.get("price", 200)
+					
+					# The AI can offer up to 2.5x the fair value, but not its entire life savings
+					var max_offer = fair_value * 2
+					var offer_cash_amount = int(offer_cash_ratio * min(max_offer, my_player.money))
+					
+					var demand_cash_amount = int(demand_cash_ratio * target_player.money)
+					
+					gc.ai_propose_trade(target_p_idx, give_prop_idx, take_prop_idx, offer_cash_amount, demand_cash_amount)
+				else:
+					# If no valid player found, give a small "invalid action" penalty
+					reward -= 0.05
 		Actions.SKIP_TURN:
 			if is_my_turn and gc.game_state == gc.GameState.SKIP_OTHER_TURN:
 				if target_p_idx >= 0 and target_p_idx < gc.players.size() and target_p_idx != gc.current_player:
@@ -214,8 +274,23 @@ func _generate_action_mask() -> Array:
 	mask.fill(0.0)
 	
 	var is_my_turn = (gc.players[gc.current_player] == my_player)
+	var is_mandatory_state = false
 	mask[Actions.DO_NOTHING] = 1.0
-	
+	if is_my_turn and gc.game_state in [gc.GameState.WAITING_ROLL, gc.GameState.PROPERTY_DECISION, gc.GameState.LIQUIDATION, gc.GameState.SWAP_SELECT_PLAYER, gc.GameState.SWAP_PROPERTIES, gc.GameState.STEAL_PROPERTY, gc.GameState.SKIP_OTHER_TURN]:
+		is_mandatory_state = true
+		
+	if gc.game_state == gc.GameState.AUCTION and not gc.auction_manager.participants.is_empty():
+		if gc.auction_manager.turn_index < gc.auction_manager.participants.size():
+			if gc.auction_manager.participants[gc.auction_manager.turn_index] == my_player:
+				is_mandatory_state = true
+				
+	if gc.is_reviewing_trade and gc.ui.current_trade != null and gc.ui.current_trade.p2 == my_player:
+		is_mandatory_state = true
+
+	# Only allow DO_NOTHING if we aren't forced to act
+	if not is_mandatory_state:
+		mask[Actions.DO_NOTHING] = 1.0
+		
 	if is_my_turn:
 		if gc.game_state == gc.GameState.WAITING_ROLL:
 			mask[Actions.ROLL] = 1.0
@@ -278,30 +353,70 @@ func _generate_action_mask() -> Array:
 		
 	return mask
 	
+	
 func get_reward() -> float:
-	reward = 0.0
-	var property_value = 0.0
-	var monopoly_count = 0
-	
-	for t in my_player.properties:
-		# tile_data is a Dictionary, so 2 arguments (key, default) is fine here
-		property_value += t.tile_data.get("price", 0) / 2.0
-		
-		# t is an Object (Node3D), so get() only takes 1 argument
-		var houses = t.get("house_count")
-		if houses != null:
-			property_value += float(houses) * 50.0
-			
-		var is_mono = t.get("is_monopoly")
-		if is_mono == true:
-			monopoly_count += 1
-
-	var net_worth = my_player.money + property_value
-	
-	reward += (net_worth / MAX_MONEY_SCALE) * 0.01
-	reward += monopoly_count * 0.05
+	# 1. Grab any rewards accumulated during set_action() (like buying/bidding)
+	var step_reward = self.reward 
+	self.reward = 0.0 # Clear the base reward for the next step so it doesn't duplicate
 	
 	if my_player.is_bankrupt:
-		reward -= 1.0
+		return clamp(step_reward - 15.0, -15.0, 15.0) # Scaled to match clamp
 		
-	return reward
+	var active_opponents = 0
+	var total_opponent_net_worth = 0.0
+	var opponent_monopoly_count = 0
+	
+	# 2. Calculate MY Wealth
+	var my_property_value = 0.0
+	var my_monopoly_count = 0
+	var my_building_value = 0.0
+	
+	for t in my_player.properties:
+		my_property_value += t.tile_data.get("price", 0) 
+		
+		var funding_level = t.get("funding")
+		if funding_level != null and funding_level > 0:
+			my_building_value += float(funding_level) * 1500.0 # Standardized multiplier
+			
+		if t.get("is_monopoly") == true:
+			my_monopoly_count += 1
+			
+	var my_net_worth = my_player.money + my_property_value * 1.5 + my_building_value
+	
+	# 3. Calculate OPPONENTS' Wealth
+	for p in gc.players:
+		if p != my_player and not p.is_bankrupt:
+			active_opponents += 1
+			var opp_prop_val = 0.0
+			for t in p.properties:
+				opp_prop_val += t.tile_data.get("price", 0)
+				
+				var opp_funding = t.get("funding")
+				if opp_funding != null and opp_funding > 0:
+					opp_prop_val += float(opp_funding) * 1500.0 # Standardized multiplier
+					
+				if t.get("is_monopoly") == true:
+					opponent_monopoly_count += 1
+					
+			total_opponent_net_worth += p.money + opp_prop_val
+
+	if active_opponents == 0:
+		return clamp(step_reward + 15.0, -15.0, 15.0) # Victory!
+		
+	var avg_opponent_net_worth = total_opponent_net_worth / max(1, active_opponents)
+	var wealth_difference = my_net_worth - avg_opponent_net_worth
+	
+	# 4. Tanh bounds the wealth difference smoothly between -2.0 and +2.0
+	# No matter how rich they get, this cannot explode!
+	step_reward += tanh(wealth_difference / 10000.0) * 2.0 
+
+	# 5. Strategic Modifiers (Scaled down so they don't break the clamped limits)
+	step_reward += (my_monopoly_count * 1.0)        
+	step_reward -= (opponent_monopoly_count * 1.5) 
+	
+	if my_player.money < 200:
+		step_reward -= 0.5
+	step_reward -= 0.05 # Time penalty
+
+	# 6. ABSOLUTE HARD CLAMP. The AI's brain will never explode again.
+	return clamp(step_reward, -15.0, 15.0)

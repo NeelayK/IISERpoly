@@ -27,7 +27,6 @@ func execute_action(tile, mode: String, player):
 			player.money -= cost
 			tile.is_mortgaged = false
 			
-	tile.refresh_buildings()
 
 #check validity for property functions (highlights in gc)
 func is_valid_for_action(tile, mode: String, player, all_tiles: Array) -> bool:
