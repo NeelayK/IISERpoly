@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://bvppo81bfjnr3"]
+
+[ext_resource type="Script" uid="uid://dyqvlwmtcarfk" path="res://main/board_items/player.gd" id="1_1e681"]
+[ext_resource type="AudioStream" uid="uid://c1pcj6pdfgny4" path="res://assets/sounds/pop.wav" id="2_5k612"]
+[ext_resource type="Material" uid="uid://d3w7yktapkp0i" path="res://materials/Player/Player_Material.tres" id="2_apucr"]
+
+[node name="Player" type="Node3D" unique_id=75860781]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+script = ExtResource("1_1e681")
+settle_sound = ExtResource("2_5k612")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1526212578]
+material_override = ExtResource("2_apucr")
+
+[node name="AudioPlayer" type="AudioStreamPlayer3D" parent="." unique_id=1727169209]

@@ -1,0 +1,420 @@
+[gd_scene format=3 uid="uid://cn4sqssoex48h"]
+
+[ext_resource type="Script" uid="uid://c6n7rj58sx6sw" path="res://main/board/board_setup.gd" id="1_ey7ds"]
+[ext_resource type="PackedScene" uid="uid://ddowb8y14hb8f" path="res://main/board/tile.tscn" id="2_514y6"]
+[ext_resource type="Script" uid="uid://t7a83a20bydn" path="res://main/board_items/dice_manager.gd" id="3_6d5ub"]
+[ext_resource type="Script" uid="uid://y1v1yfpxwe2y" path="res://main/board/board_state.gd" id="3_xyq2n"]
+[ext_resource type="PackedScene" uid="uid://d0gtlpkjl2ysl" path="res://main/board_items/dice.tscn" id="4_nyh1f"]
+[ext_resource type="ArrayMesh" uid="uid://ogerk227ym3y" path="res://assets/Environment.obj" id="5_hckit"]
+[ext_resource type="Script" uid="uid://pun3mtk0ai35" path="res://main/game_controller/game_controller.gd" id="5_lrx66"]
+[ext_resource type="Texture2D" uid="uid://b84jxh2fskrkr" path="res://materials/Floor/Poliigon_WoodFloorAsh_4186_BaseColor.jpg" id="6_a20sp"]
+[ext_resource type="PackedScene" uid="uid://bvppo81bfjnr3" path="res://main/board_items/player.tscn" id="6_iph2q"]
+[ext_resource type="Script" uid="uid://ca3r4bqeum6d4" path="res://main/game_controller/auction_manager.gd" id="8_wcq3i"]
+[ext_resource type="Script" uid="uid://dfy7ak7bawpqf" path="res://main/game_controller/property_manager.gd" id="9_4ijfq"]
+[ext_resource type="Script" uid="uid://cve7iud4b7ck" path="res://main/board/card_manager.gd" id="10_3lxql"]
+[ext_resource type="Texture2D" uid="uid://onubyq73qnty" path="res://materials/HDRI/pergola_walkway_2k.hdr" id="10_xug3m"]
+[ext_resource type="VoxelGIData" uid="uid://ui023dxxb73f" path="res://materials/BakedLight/game.VoxelGI_data.res" id="11_a20sp"]
+[ext_resource type="Script" uid="uid://bfkxeaydd1sc1" path="res://main/ui/camera_rig.gd" id="15_sveyw"]
+[ext_resource type="PackedScene" uid="uid://dfgdebdcat2yf" path="res://main/ui/auction_panel.tscn" id="15_wcq3i"]
+[ext_resource type="Script" uid="uid://2mhklwmigp76" path="res://main/ui/ui.gd" id="15_xug3m"]
+[ext_resource type="PackedScene" uid="uid://dspm7kjffpwnl" path="res://main/ui/player_hud.tscn" id="16_sveyw"]
+[ext_resource type="PackedScene" uid="uid://bwfrpoqso0ifx" path="res://main/ui/action_button.tscn" id="17_wcq3i"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sveyw"]
+albedo_texture = ExtResource("6_a20sp")
+roughness = 0.64
+uv1_scale = Vector3(10, 10, 10)
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_wcq3i"]
+panorama = ExtResource("10_xug3m")
+
+[sub_resource type="Sky" id="Sky_4ijfq"]
+sky_material = SubResource("PanoramaSkyMaterial_wcq3i")
+
+[sub_resource type="Environment" id="Environment_ge21c"]
+background_mode = 2
+background_energy_multiplier = 0.5
+sky = SubResource("Sky_4ijfq")
+fog_density = 0.1
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_hckit"]
+
+[node name="Game" type="Node3D" unique_id=1361872469]
+
+[node name="Board" type="Node3D" parent="." unique_id=154058985]
+script = ExtResource("1_ey7ds")
+tile_scene = ExtResource("2_514y6")
+
+[node name="BoardState" type="Node3D" parent="Board" unique_id=2130132359]
+script = ExtResource("3_xyq2n")
+
+[node name="Tiles" type="Node3D" parent="Board" unique_id=1385810866]
+
+[node name="DiceManager" type="Node3D" parent="." unique_id=801625166]
+script = ExtResource("3_6d5ub")
+dice_scene = ExtResource("4_nyh1f")
+
+[node name="GameController" type="Node3D" parent="." unique_id=1494712387 node_paths=PackedStringArray("dice_controller", "board_state", "ui", "camera_rig")]
+script = ExtResource("5_lrx66")
+player_scene = ExtResource("6_iph2q")
+dice_controller = NodePath("../DiceManager")
+board_state = NodePath("../Board/BoardState")
+ui = NodePath("../UI")
+camera_rig = NodePath("../CameraRIG")
+
+[node name="AuctionManager" type="Node3D" parent="GameController" unique_id=1801874946]
+script = ExtResource("8_wcq3i")
+
+[node name="PropertyManager" type="Node3D" parent="GameController" unique_id=1767514164]
+script = ExtResource("9_4ijfq")
+
+[node name="CardManager" type="Node3D" parent="GameController" unique_id=1144084039]
+script = ExtResource("10_3lxql")
+
+[node name="Environment" type="Node3D" parent="." unique_id=1011231608]
+
+[node name="Floor" type="MeshInstance3D" parent="Environment" unique_id=103589620]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 2.9691858, -0.29820642, -0.91806555)
+mesh = ExtResource("5_hckit")
+surface_material_override/1 = SubResource("StandardMaterial3D_sveyw")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=1723087591]
+environment = SubResource("Environment_ge21c")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=106667225]
+transform = Transform3D(0.120916635, 0.74438953, 0.65670645, 6.0801435e-09, -0.6615606, 0.7498918, 0.9926626, -0.09067435, -0.079993635, 0, 2.1704535, 0)
+light_bake_mode = 1
+shadow_enabled = true
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Environment" unique_id=1591738255]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/StaticBody3D" unique_id=1796737934]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.298, 0)
+shape = SubResource("WorldBoundaryShape3D_hckit")
+debug_color = Color(0.98805624, 0, 0.31137228, 0.41960785)
+
+[node name="VoxelGI" type="VoxelGI" parent="." unique_id=1917217326]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86865234, 19.732178, -2.6537476)
+subdiv = 0
+size = Vector3(46.63965, 40.464355, 44.447144)
+data = ExtResource("11_a20sp")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1600656523 node_paths=PackedStringArray("CardPanel")]
+script = ExtResource("15_xug3m")
+player_panel_scene = ExtResource("16_sveyw")
+button_scene = ExtResource("17_wcq3i")
+CardPanel = NodePath("CardPanel")
+
+[node name="CardPanel" type="Panel" parent="UI" unique_id=2029245325]
+visible = false
+custom_minimum_size = Vector2(400, 200)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/CardPanel" unique_id=162409822]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="UI/CardPanel/VBoxContainer" unique_id=1207720235]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="Description" type="Label" parent="UI/CardPanel/VBoxContainer" unique_id=1246090875]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="AcceptButton" type="Button" parent="UI/CardPanel/VBoxContainer" unique_id=839502444]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+text = "OK"
+
+[node name="AuctionPanel" parent="UI" unique_id=261279087 instance=ExtResource("15_wcq3i")]
+visible = false
+offset_left = 29.0
+offset_top = 182.0
+offset_right = -940.0
+offset_bottom = -199.0
+
+[node name="PlayerPanels" type="MarginContainer" parent="UI" unique_id=701558278]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 574.0
+offset_right = -24.0
+offset_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelList" type="HBoxContainer" parent="UI/PlayerPanels" unique_id=577469550]
+layout_mode = 2
+
+[node name="ActionBar" type="MarginContainer" parent="UI" unique_id=852446653]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 34.0
+offset_top = 552.0
+offset_right = -47.0
+offset_bottom = 602.0
+grow_horizontal = 2
+
+[node name="ActionButtons" type="HBoxContainer" parent="UI/ActionBar" unique_id=1699157095]
+layout_mode = 2
+
+[node name="PropertyDetailPanel" type="Panel" parent="UI" unique_id=1575429712]
+visible = false
+offset_left = 1086.0
+offset_top = 283.0
+offset_right = 1253.0
+offset_bottom = 540.0
+
+[node name="Title" type="Label" parent="UI/PropertyDetailPanel" unique_id=1902027091]
+layout_mode = 0
+offset_right = 167.0
+offset_bottom = 23.0
+
+[node name="Owner" type="Label" parent="UI/PropertyDetailPanel" unique_id=1962449548]
+layout_mode = 0
+offset_top = 30.0
+offset_right = 167.0
+offset_bottom = 53.0
+autowrap_mode = 2
+
+[node name="RentList" type="VBoxContainer" parent="UI/PropertyDetailPanel" unique_id=1180503058]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 65.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VictimPanel" type="Panel" parent="UI" unique_id=458887243]
+visible = false
+custom_minimum_size = Vector2(400, 200)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Instructions" type="Label" parent="UI/VictimPanel" unique_id=1118560122]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
+
+[node name="VictimSelectionMenu" type="VBoxContainer" parent="UI/VictimPanel" unique_id=829673541]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 48.0
+offset_right = -50.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TradePanel" type="Panel" parent="UI" unique_id=1726829413]
+visible = false
+custom_minimum_size = Vector2(400, 300)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -261.0
+offset_right = 200.0
+offset_bottom = -61.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/TradePanel" unique_id=1738274468]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer" unique_id=2004868437]
+layout_mode = 2
+text = "Trade Offer"
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/TradePanel/VBoxContainer" unique_id=354814544]
+custom_minimum_size = Vector2(0, 230)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer" unique_id=250908224]
+layout_mode = 2
+alignment = 1
+
+[node name="P1" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer" unique_id=327417729]
+layout_mode = 2
+
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=2093945127]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "You Get"
+horizontal_alignment = 1
+
+[node name="Total" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=1784040606]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Total:"
+horizontal_alignment = 1
+
+[node name="HSlider" type="HSlider" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=1034681119]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Cash" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=112800955]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Cash: "
+horizontal_alignment = 1
+
+[node name="PropertyList" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P1" unique_id=245608310]
+layout_mode = 2
+
+[node name="P2" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer" unique_id=694520681]
+layout_mode = 2
+
+[node name="Head" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=829191792]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "You Get"
+horizontal_alignment = 1
+
+[node name="Total" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=349416530]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Total: "
+horizontal_alignment = 1
+
+[node name="HSlider" type="HSlider" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=168935942]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+step = 10.0
+
+[node name="Cash" type="Label" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=474491726]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Cash:"
+horizontal_alignment = 1
+
+[node name="PropertyList" type="VBoxContainer" parent="UI/TradePanel/VBoxContainer/ScrollContainer/HBoxContainer/P2" unique_id=1312600433]
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="UI/TradePanel/VBoxContainer" unique_id=259255386]
+layout_mode = 2
+alignment = 1
+
+[node name="Cancel" type="Button" parent="UI/TradePanel/VBoxContainer/Buttons" unique_id=1978238172]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Cancel"
+
+[node name="Confirm" type="Button" parent="UI/TradePanel/VBoxContainer/Buttons" unique_id=1087901000]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Confirm"
+
+[node name="TurnDisplay" type="Panel" parent="UI" unique_id=71991479]
+custom_minimum_size = Vector2(200, 50)
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+size_flags_horizontal = 4
+
+[node name="Name" type="Label" parent="UI/TurnDisplay" unique_id=1841935087]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PauseMenu" type="Control" parent="UI" unique_id=28996167]
+process_mode = 3
+custom_minimum_size = Vector2(150, 200)
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/PauseMenu" unique_id=1870857267]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="Resume" type="Button" parent="UI/PauseMenu/VBoxContainer" unique_id=560808145]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "Resume"
+
+[node name="Quit" type="Button" parent="UI/PauseMenu/VBoxContainer" unique_id=1294521062]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "Quit"
+
+[node name="PauseButton" type="Button" parent="UI" unique_id=203390594]
+custom_minimum_size = Vector2(50, 50)
+offset_right = 8.0
+offset_bottom = 8.0
+text = "||"
+
+[node name="CameraRIG" type="Node3D" parent="." unique_id=429319313]
+script = ExtResource("15_sveyw")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRIG" unique_id=938541942]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55025, 0)
+
+[node name="DiceAnchor" type="Node3D" parent="CameraRIG" unique_id=1598576009]
+
+[node name="PlayerAnchor" type="Node3D" parent="CameraRIG" unique_id=470789046]
+
+[node name="FreeAnchor" type="Node3D" parent="CameraRIG" unique_id=1018399853]
+
+[connection signal="pressed" from="UI/CardPanel/VBoxContainer/AcceptButton" to="UI" method="_on_accept_button_pressed"]

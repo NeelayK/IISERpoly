@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://b4bwakrhfuoiq"]
+
+[ext_resource type="ArrayMesh" uid="uid://c56ndkpkxbatm" path="res://assets/funds/gold_bar.obj" id="1_pwetb"]
+[ext_resource type="Material" uid="uid://cosldgtwraon1" path="res://materials/Tile/funds.tres" id="2_u17s0"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_u17s0"]
+size = Vector3(0.25, 0.125, 0.563)
+
+[node name="GoldBar" type="RigidBody3D" unique_id=216991414]
+transform = Transform3D(0.94176435, 0, 0.33627355, 0, 1, 0, -0.33627355, 0, 0.94176435, 0, 0, 0)
+continuous_cd = true
+linear_damp = 2.0
+angular_damp = 5.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1151911686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.038081504, 0)
+shape = SubResource("BoxShape3D_u17s0")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=565175139]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+mesh = ExtResource("1_pwetb")
+surface_material_override/0 = ExtResource("2_u17s0")

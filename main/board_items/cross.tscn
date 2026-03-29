@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://4esrnnhlxsgo"]
+
+[ext_resource type="ArrayMesh" uid="uid://0h5q0dy6lfl" path="res://assets/funds/cross.obj" id="1_08tmh"]
+[ext_resource type="Material" uid="uid://d3w7yktapkp0i" path="res://materials/Player/Player_Material.tres" id="2_ns8vo"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_w8175"]
+size = Vector3(0.45, 0.085, 0.45)
+
+[node name="Cross" type="RigidBody3D" unique_id=216991414]
+transform = Transform3D(0.75192034, 0, -0.65925395, 0.09532679, 0.9894905, 0.10872616, 0.6523255, -0.14459798, 0.744018, 0, 0, 0)
+continuous_cd = true
+linear_damp = 2.0
+angular_damp = 5.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1151911686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.038495637, -2.0377846e-09)
+shape = SubResource("BoxShape3D_w8175")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=565175139]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+mesh = ExtResource("1_08tmh")
+surface_material_override/0 = ExtResource("2_ns8vo")

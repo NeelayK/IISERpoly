@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://bwfrpoqso0ifx"]
+
+[sub_resource type="Theme" id="Theme_upmhn"]
+default_font_size = 14
+
+[sub_resource type="Theme" id="Theme_rjqtm"]
+default_font_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_upmhn"]
+bg_color = Color(0.1288298, 0.1288298, 0.12882972, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="Button" type="Button" unique_id=1467543900]
+custom_minimum_size = Vector2(100, 35)
+offset_right = 8.0
+offset_bottom = 8.0
+theme = SubResource("Theme_upmhn")
+text = "Boo"
+autowrap_mode = 2
+
+[node name="HelperLabel" type="Label" parent="." unique_id=736295737]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.86500007
+anchor_top = -0.16000001
+anchor_right = 1.065
+anchor_bottom = 0.3
+offset_left = -1.5258789e-05
+offset_right = -1.5258789e-05
+theme = SubResource("Theme_rjqtm")
+text = "space"
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="ColorRect" type="Panel" parent="HelperLabel" unique_id=221703111]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_upmhn")

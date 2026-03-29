@@ -1,0 +1,36 @@
+[gd_scene format=3 uid="uid://ddowb8y14hb8f"]
+
+[ext_resource type="Script" uid="uid://deyvk0fnwxnja" path="res://main/board/tile.gd" id="1_n2v4y"]
+[ext_resource type="Material" uid="uid://0cqn7ifk1krc" path="res://materials/Tile/Tile.tres" id="2_4nwr2"]
+[ext_resource type="PackedScene" uid="uid://dmcwbpel3tmxu" path="res://main/board_items/coin_model.tscn" id="2_ok4ne"]
+[ext_resource type="PackedScene" uid="uid://b4bwakrhfuoiq" path="res://main/board_items/gold_bar.tscn" id="3_r8m27"]
+[ext_resource type="PackedScene" uid="uid://4esrnnhlxsgo" path="res://main/board_items/cross.tscn" id="4_6qff8"]
+
+[node name="Tile" type="Node3D" unique_id=1909658383]
+transform = Transform3D(0.98, 0, 0, 0, 0.98, 0, 0, 0, 0.98, 0, 0, 0)
+script = ExtResource("1_n2v4y")
+coin_model = ExtResource("2_ok4ne")
+gold_bar = ExtResource("3_r8m27")
+cross = ExtResource("4_6qff8")
+
+[node name="Base" type="MeshInstance3D" parent="." unique_id=1943379349]
+material_override = ExtResource("2_4nwr2")
+
+[node name="PropertyStrip" type="MeshInstance3D" parent="." unique_id=864885501]
+
+[node name="Collision" type="StaticBody3D" parent="." unique_id=110783733]
+
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1558130400]
+transform = Transform3D(1.01, 0, 0, 0, 1.01, 0, 0, 0, 1.01, 0, 0, 0)
+
+[node name="Selection" type="Area3D" parent="." unique_id=1328806382]
+transform = Transform3D(1.01, 0, 0, 0, 1.01, 0, 0, 0, 1.01, 0, 0, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="Selection" unique_id=763390157]
+debug_color = Color(0.8352941, 0, 0.3254902, 1)
+
+[node name="BuildingContainer" type="Node3D" parent="." unique_id=126373749]
+
+[connection signal="input_event" from="Selection" to="." method="_on_area_3d_input_event"]
+[connection signal="mouse_entered" from="Selection" to="." method="_mouse_entered"]
+[connection signal="mouse_exited" from="Selection" to="." method="_mouse_exited"]
