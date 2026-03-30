@@ -293,7 +293,8 @@ func spawn_players():
 		new_player.player_index = i 
 		
 		new_player.player_name = config["name"]
-		new_player.is_ai = config["is_ai"]        
+		new_player.is_ai = config["is_ai"]      
+		new_player.is_ppo = config["is_ppo"]  
 		new_player.move_finished.connect(_on_player_move_finished)
 		var player_mesh_instance = new_player.get_node("MeshInstance3D")
 		player_mesh_instance.mesh = config["model"]

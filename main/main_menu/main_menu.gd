@@ -122,7 +122,8 @@ func _add_player_row():
 	
 	ai_select.clear()
 	ai_select.add_item("Human")
-	ai_select.add_item("AI")
+	ai_select.add_item("AI-PPO")
+	ai_select.add_item("AI-Heuristic")
 		
 	shiny_select.clear()
 	shiny_select.add_item("Matte")
@@ -141,7 +142,7 @@ func _add_player_row():
 	type_select.selected = current_count % GameConfig.FIGURINE_MESHES.size()
 	color_select.selected = current_count % GameConfig.ALLOWED_COLORS.size()
 	shiny_select.selected = 0
-	ai_select.selected = 0 
+	ai_select.selected = 1 
 	
 	mesh_instance.mesh = GameConfig.FIGURINE_MESHES[type_select.selected]["model"]
 
@@ -165,8 +166,6 @@ func _add_player_row():
 		else:
 			mat.metallic = 0.0
 			mat.roughness = 0.8
-
-	# --- 4. CONNECT SIGNALS ---
 	color_select.item_selected.connect(func(_idx): update_preview_mat.call())
 	shiny_select.item_selected.connect(func(_idx): update_preview_mat.call())
 	
@@ -187,6 +186,7 @@ func _start_game():
 			"color": GameConfig.ALLOWED_COLORS[row.get_node("ColorSelect").get_item_text(row.get_node("ColorSelect").selected)],
 			"model": GameConfig.FIGURINE_MESHES[row.get_node("TypeSelect").selected]["model"],
 			"is_ai": row.get_node("AISelect").selected > 0,
+			"is_ppo": row.get_node("AISelect").selected == 1,
 			"is_metal": row.get_node("ShinySelect").selected == 1
 		})
 	call_deferred("_go_to_game_scene")

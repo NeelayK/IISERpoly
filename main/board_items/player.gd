@@ -10,6 +10,7 @@ signal passed_go
 @onready var audio_player: AudioStreamPlayer3D = $AudioPlayer
 var negative_dice := false
 var is_in_jail := false
+var is_ppo := false
 var jail_turns := 0
 var is_ai := false
 var skip_turn = false

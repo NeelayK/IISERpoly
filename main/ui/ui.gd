@@ -244,15 +244,16 @@ func show_property_details(tile, library_money= 0):
 		var lbl = Label.new()
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.text = "4x roll"
-		if current_level==1:
-			lbl.add_theme_color_override("font_color", Color.LIME_GREEN)
-		elif current_level==2:
-			lbl.add_theme_color_override("font_color", Color.CRIMSON)
-		rent_list.add_child(lbl)
 		var lbl2 = Label.new()
 		lbl2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl2.text = "10x roll"
+		if current_level==1:
+			lbl.add_theme_color_override("font_color", Color.LIME_GREEN)
+		elif current_level==2:
+			lbl2.add_theme_color_override("font_color", Color.LIME_GREEN)
+		rent_list.add_child(lbl)
 		rent_list.add_child(lbl2)
+		
 	
 	elif tile.tile_type == BoardData.TileType.CORNER:
 		if tile.tile_data.get("name") == "Library":
