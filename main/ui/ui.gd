@@ -95,17 +95,42 @@ func update_ui():
 	for entry in panels:
 		var money_label = entry.panel.get_node("Data/Money")
 		var player = entry.player
-		
 		if player.is_bankrupt:
 			money_label.text = "BANKRUPT"
 			money_label.add_theme_color_override("font_color", Color.LIME_GREEN)
-			entry.panel.modulate = Color(0.278, 0.525, 0.714, 0.8) 
+			entry.panel.modulate = Color(0.278, 0.525, 0.714, 0.8)
+			continue
+			
+		money_label.text = "$" + str(player.money)
+		money_label.remove_theme_color_override("font_color")
+		
+		var last_money = entry.panel.get_meta("last_money", player.money)
+		entry.panel.set_meta("last_money", player.money)
+		
+		var base_color = Color.WHITE
+		if player.money < 0:
+			base_color = Color(1.0, 0.4, 0.4)
+			
+		if player.money != last_money:
+			var flash_color = Color.GREEN if player.money > last_money else Color.RED
+			
+			if entry.panel.has_meta("color_tween"):
+				var old_tween = entry.panel.get_meta("color_tween")
+				if is_instance_valid(old_tween) and old_tween.is_running():
+					old_tween.kill()
+					
+			var tween = entry.panel.create_tween()
+			entry.panel.set_meta("color_tween", tween)
+			
+			tween.tween_property(entry.panel, "modulate", flash_color, 0.2)
+			tween.tween_property(entry.panel, "modulate", base_color, 0.8)
+			
 		else:
-			money_label.text = "$" + str(player.money)
-			money_label.remove_theme_color_override("font_color")
-			entry.panel.modulate = Color.WHITE
+			var has_active_tween = entry.panel.has_meta("color_tween") and is_instance_valid(entry.panel.get_meta("color_tween")) and entry.panel.get_meta("color_tween").is_running()
+			
+			if not has_active_tween:
+				entry.panel.modulate = base_color
 
-#removes buttons in action container
 func clear_buttons():
 	for child in action_container.get_children():
 		child.queue_free()

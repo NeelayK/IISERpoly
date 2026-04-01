@@ -10,11 +10,12 @@ extends Node3D
 @onready var property_manager = $PropertyManager
 @onready var card_manager = $CardManager
 
+
+
 const AI_MIN_RESERVE        := 50
 const AI_BUILD_SURPLUS      := 200
 const AI_UNMORTGAGE_SURPLUS := 300
 
-# Per-turn AI state
 var ai_trade_attempted_this_turn := false
 var  PLAYER_COUNT = GameConfig.player_data.size()
 const JAIL_INDEX := 10
@@ -50,7 +51,6 @@ var is_reviewing_trade := false
 #INITIALIZATION: setup children, connect ui functions
 func _ready():
 	await get_tree().process_frame
-	# Setup Sub-Managers
 	auction_manager.setup(ui, self)
 	auction_manager.auction_finished.connect(_on_auction_finished)
 	property_manager.setup(board_state)
@@ -76,6 +76,7 @@ func _ready():
 		push_error("No players found in GameConfig.")
 	game_started = true
 	for t in tiles: t.set_highlight(false)
+	ui.update_ui()
 
 # send_to_jail  — was show_default_actions(true, true)
 func send_to_jail(player):
@@ -85,7 +86,7 @@ func send_to_jail(player):
 	rolled_doubles = false
 	player.current_tile = 10
 	player.relocate_on_tile(tiles[10].global_position, player.get_visual_offset())
-	show_default_actions()   # camera_pan=true → will switch from tracking to pan at jail tile
+	show_default_actions()
 
 
 # _handle_jail_roll  — was show_default_actions(true, true)
@@ -104,7 +105,7 @@ func _handle_jail_roll(player, die1, die2):
 			await player.move_steps(die1 + die2, tiles)
 			resolve_tile(player)
 		else:
-			show_default_actions()   # player stays at jail tile
+			show_default_actions()
 
 
 # _buy_property  — was show_default_actions(true, true)
@@ -113,20 +114,20 @@ func _buy_property():
 	var tile = tiles[player.current_tile]
 	var price = tile.tile_data.get("price", 0)
 	if price == 0:
-		print("Error: Attempted to buy a tile with no price!")
+		push_error("Tried buying property with 0 price.")
 		return
 	player.money -= tile.tile_data.price
 	player.properties.append(tile)
-	tile.tile_owner = player   # setter now calls refresh_owner_marker automatically
+	tile.tile_owner = player
 	ui.update_ui()
 	ui.show_property_details(tile, library_reward)
-	show_default_actions()     # camera already near tile; pan_mode check prevents re-jerk
-	tile.set_highlight(true, Color.GREEN)
+	show_default_actions()
+	tile.set_highlight(true, Color.from_hsv(0.37, 0.555, 0.524, 1.0))
 	await get_tree().create_timer(0.2).timeout
 	tile.set_highlight(false)
 
 
-# check_liquidation human branch — fix camera call to use player position
+# check_liquidation
 func check_liquidation(player):
 	if player.money < 0:
 		game_state = GameState.LIQUIDATION
@@ -139,19 +140,16 @@ func check_liquidation(player):
 				var before = player.money
 				_ai_emergency_liquidate(player)
 				if player.money == before:
-					break   # Nothing left to sell or mortgage — stop looping
+					break
 				await get_tree().create_timer(0.15).timeout
 
 			await get_tree().create_timer(0.3).timeout
 			if player.money >= 0:
-				print("[AI] Survived with $", player.money)
 				show_default_actions()
 			else:
-				print("[AI] Cannot recover. Declaring bankruptcy.")
 				_declare_bankruptcy()
 			return
 
-		# ── Human branch ──
 		var sellable     := []
 		var mortgageable := []
 		for t in player.properties:
@@ -161,9 +159,9 @@ func check_liquidation(player):
 		var pos = player.global_position
 		camera_rig.enable_tabletop_pan(Vector3(pos.x, 0, pos.z))
 		ui.show_turn_actions({
-			"sell":       setup_tile_selection.bind("sell",      Color(1.0,  0.812, 0.85, 1.0)),
-			"mortgage":   setup_tile_selection.bind("mortgage",  Color(0.841,0.857, 1.0,  1.0)),
-			"unmortgage": setup_tile_selection.bind("unmortgage",Color(1.0,  0.85,  0.5)),
+			"sell":       setup_tile_selection.bind("sell",      Color.from_hsv(0.295, 0.569, 0.613, 1.0)),
+			"mortgage":   setup_tile_selection.bind("mortgage",  Color.from_hsv(0.968, 0.62, 0.857, 1.0)),
+			"unmortgage": setup_tile_selection.bind("unmortgage",Color.from_hsv(0.107, 0.68, 0.819, 1.0)),
 			"trade":      func(): ui.trade_selector(players, current_player),
 			"end_turn":   _declare_bankruptcy
 		}, true)
@@ -191,24 +189,21 @@ func _rearrange_players_on_tile(tile_idx: int):
 			offset = Vector3(cos(angle) * radius, 0, sin(angle) * radius)
 		players_on_this_tile[i].relocate_on_tile(tile_pos, offset)
 
-# ── Helper: canonical colour for each action mode ──
 func _get_action_color(mode: String) -> Color:
 	match mode:
-		"build":      return Color.GREEN
-		"sell":       return Color.RED
-		"mortgage":   return Color.ORANGE
-		"unmortgage": return Color.YELLOW
+		"build":      return Color.from_hsv(0.295, 0.569, 0.613, 1.0)
+		"sell":       return Color.from_hsv(0.968, 0.62, 0.857, 1.0)
+		"mortgage":   return Color.from_hsv(0.107, 0.68, 0.819, 1.0)
+		"unmortgage": return Color.from_hsv(0.803, 0.5, 0.773, 1.0)
 	return Color.WHITE
 
 
-# ── Modified: simplified signature, camera only transitions when needed ──
 func show_default_actions(camera_pan: bool = true):
 	var action_turn_token = turn_id
 	game_state = GameState.TURN_ACTIONS
 	var player = players[current_player]
 
 	if player.is_ai:
-		print("[AI] Evaluating post-turn actions...")
 		_ai_take_turn_actions(player, action_turn_token)
 		return
 
@@ -227,19 +222,18 @@ func show_default_actions(camera_pan: bool = true):
 		if property_manager.is_valid_for_action(t, "unmortgage", player, tiles): unmortgageable.append(t)
 
 	ui.show_turn_actions({
-		"build":      setup_tile_selection.bind("build",      Color.GREEN),
-		"sell":       setup_tile_selection.bind("sell",       Color.RED),
-		"mortgage":   setup_tile_selection.bind("mortgage",   Color.ORANGE),
-		"unmortgage": setup_tile_selection.bind("unmortgage", Color.YELLOW),
+		"build":      setup_tile_selection.bind("build",      Color.from_hsv(0.295, 0.569, 0.613, 1.0)),
+		"sell":       setup_tile_selection.bind("sell",       Color.from_hsv(0.968, 0.62, 0.857, 1.0)),
+		"mortgage":   setup_tile_selection.bind("mortgage",   Color.from_hsv(0.107, 0.68, 0.819, 1.0)),
+		"unmortgage": setup_tile_selection.bind("unmortgage", Color.from_hsv(0.803, 0.5, 0.773, 1.0)),
 		"trade":      func(): ui.trade_selector(players, current_player),
 		"end_turn":   _end_turn
 	})
 
-
 func setup_tile_selection(mode: String, color: Color):
 	if game_state == GameState.SELECTING_TILE and current_action_mode == mode:
-		for t in tiles: t.set_highlight(false)   # also clears persistence via the updated setter
-		show_default_actions(false)               # no camera movement
+		for t in tiles: t.set_highlight(false)
+		show_default_actions(false)
 		return
 
 	game_state = GameState.SELECTING_TILE
@@ -248,10 +242,9 @@ func setup_tile_selection(mode: String, color: Color):
 	for t in tiles: t.set_highlight(false)
 	for t in player.properties:
 		if property_manager.is_valid_for_action(t, mode, player, tiles):
-			t.set_highlight(true, color, true)   # persistent=true keeps highlight through hover
+			t.set_highlight(true, color, true)
 
 
-# ── Modified SELECTING_TILE block inside _on_tile_clicked ──
 func _on_tile_clicked(tile):
 	ui.show_property_details(tile, library_reward)
 	var player = players[current_player]
@@ -261,8 +254,6 @@ func _on_tile_clicked(tile):
 			property_manager.execute_action(tile, current_action_mode, player)
 			ui.show_property_details(tile, library_reward)
 			ui.update_ui()
-
-			# Re-highlight remaining valid tiles rather than exiting selection
 			for t in tiles: t.set_highlight(false)
 			show_default_actions(false)
 
@@ -274,7 +265,6 @@ func _on_tile_clicked(tile):
 			return
 		if tile.tile_owner == ui.current_trade.p1 or tile.tile_owner == ui.current_trade.p2:
 			if _color_group_has_funding(tile):
-				print("Cannot trade! You must sell buildings/funds in this set first.")
 				return
 			ui.toggle_trade_property(tile)
 		return
@@ -332,8 +322,6 @@ func start_turn():
 	ai_trade_attempted_this_turn = false
 	game_state = GameState.WAITING_ROLL
 	var player = players[current_player]
-	
-	print("\n--- [LOG] Starting Turn ", turn_id, " for: ", player.player_name, " ---")
 
 	if player.is_bankrupt or player.skip_turn:
 		if player.skip_turn: player.skip_turn = false
@@ -360,7 +348,6 @@ func start_turn():
 			
 func _handle_jail_turn(player):
 	if player.is_ai:
-		print("[AI] In jail — turns served: ", player.jail_turns)
 		await get_tree().create_timer(1.0).timeout
 		if game_state != GameState.WAITING_ROLL or players[current_player] != player:
 			return
@@ -372,13 +359,9 @@ func _handle_jail_turn(player):
 	
 func _handle_normal_turn(player):
 	if player.is_ai:
-		print("[AI] Status: Normal. Options: Roll")
 		await get_tree().create_timer(1.0).timeout
 		if game_state == GameState.WAITING_ROLL and players[current_player] == player:
-			print("[AI] Decision: Rolling Dice.")
 			_roll_pressed()
-		else:
-			print("[DEBUG] AI skip prevented: Game state changed during await.")
 	else:
 		ui.show_roll_button(_roll_pressed)
 
@@ -410,7 +393,6 @@ func _roll_pressed():
 #handle camera movement to player with jail check, doubles, neg dice
 func _on_dice_result(die1, die2):
 	var dice_turn_token = turn_id
-	print("_on_dice_result")
 	latest_die_sum = abs(die1+die2)
 	var player = players[current_player]
 	if camera_rig.has_method("look_at_player"): camera_rig.look_at_player(player)
@@ -444,9 +426,7 @@ func _end_turn():
 	ui.clear_buttons()
 	var player = players[current_player]
 	
-	# Check for doubles first
 	if rolled_doubles and not player.is_bankrupt and not player.is_in_jail:
-		print("Doubles rolled! " + player.player_name + " goes again.")
 		start_turn()
 		return
 	
@@ -465,7 +445,6 @@ func _end_turn():
 		
 		if not players[current_player].is_bankrupt:
 			next_player_found = true
-			print("Transitioning turn to: " + players[current_player].player_name)
 			start_turn()
 			return
 
@@ -512,20 +491,16 @@ func resolve_tile(player):
 			
 
 			if player.is_ai:
-				print("[AI] Landed on unowned property. Evaluating...")
 				await get_tree().create_timer(1.0).timeout
 				if _ai_should_buy(player, tile):
-					print("[AI] Decision: Buying.")
 					_buy_property()
 				else:
-					print("[AI] Decision: Not worth buying now. Auctioning.")
 					_start_auction()
 			else:
 				ui.show_property_buttons(_buy_property, _start_auction, can_buy)
 				
 		elif tile.tile_owner != player:
 			if player.next_rent_free:
-				print(player.player_name, " uses their Rent Free pass!")
 				player.next_rent_free = false
 				ui.update_ui()
 				check_liquidation(player)
@@ -567,7 +542,7 @@ func _on_auction_finished(winner, property, final_price):
 		winner.properties.append(property)
 		property.tile_owner = winner
 		ui.update_ui()
-		property.set_highlight(true, Color.GREEN)
+		property.set_highlight(true, Color.from_hsv(0.803, 0.5, 0.773, 1.0))
 		await get_tree().create_timer(0.2).timeout
 		property.set_highlight(false)
 	show_default_actions()
@@ -600,7 +575,6 @@ func _check_win_condition() -> bool:
 	if active_players.size() == 1:
 		ui.update_turn_display(active_players[0].player_name + " WINS!")
 		ui.clear_buttons()
-		print("Winner is: ", active_players[0].player_name)
 		return true
 	return false
 	
@@ -612,7 +586,7 @@ func _on_player_ui_hovered(player_index: int):
 	if game_state == GameState.SELECTING_TILE: return 
 	var hovered_player = players[player_index]
 	for t in tiles:
-		if t.tile_owner == hovered_player: t.set_highlight(true, Color(0.016, 1.0, 0.914, 1.0))
+		if t.tile_owner == hovered_player: t.set_highlight(true, Color(0.534, 0.718, 0.847, 1.0))
 
 func _on_player_ui_unhovered():
 	if game_state == GameState.SELECTING_TILE: return
@@ -667,9 +641,6 @@ func _execute_trade():
 	game_state = GameState.TURN_ACTIONS
 
 func _cancel_trade():
-	if is_reviewing_trade:
-		print("Trade Declined by ", ui.current_trade.p2.player_name)
-	
 	is_reviewing_trade = false
 	ui.close_trade_panel()
 	camera_rig.look_at_player(players[current_player])
@@ -686,13 +657,13 @@ func _on_trade_button_pressed():
 	else:
 		_execute_trade()
 		
+		
 #============================================================
-# AI BRAIN
+# AI HEURISTIC BRAIN
 #============================================================
 
 enum _AIPhase { EARLY, MID, LATE }
 
-# ── Phase ──────────────────────────────────────────────────
 func _ai_game_phase() -> _AIPhase:
 	var buyable := 0
 	var owned   := 0
@@ -705,9 +676,6 @@ func _ai_game_phase() -> _AIPhase:
 	if ratio < 0.65: return _AIPhase.MID
 	return _AIPhase.LATE
 
-# ── Threat ─────────────────────────────────────────────────
-# Returns a float representing how dangerous opponents currently are.
-# Each opponent monopoly adds 1.0; each house/hotel on it adds 0.6.
 func _ai_threat_level(player) -> float:
 	var threat := 0.0
 	for p in players:
@@ -725,40 +693,35 @@ func _ai_threat_level(player) -> float:
 					threat += 1.0
 	return threat
 
-# ── Dynamic reserve ────────────────────────────────────────
-# Scales with threat, game phase, and properties owned.
 func _ai_reserve(player) -> int:
 	var threat  = _ai_threat_level(player)
 	var phase   = _ai_game_phase()
 
 	var base := 120
-	base += int(threat * 35)          # More threat → hold more cash
-	base += player.properties.size() * 12   # More exposure → hold more cash
+	base += int(threat * 35)
+	base += player.properties.size() * 12
 
 	match phase:
-		_AIPhase.EARLY: base = int(base * 0.75)  # Aggressive land-grab
+		_AIPhase.EARLY: base = int(base * 0.75)
 		_AIPhase.MID:   base = int(base * 1.00)
-		_AIPhase.LATE:  base = int(base * 1.25)  # Cautious, threat is high
+		_AIPhase.LATE:  base = int(base * 1.25)
 
 	return clamp(base, 80, 700)
 
-# ── Build surplus ─────────────────────────────────────────
-# How much ABOVE reserve is needed before spending on buildings.
-# Shrinks in late game when building is critical.
+
+@warning_ignore("unused_parameter")
 func _ai_build_surplus(player) -> int:
 	var phase = _ai_game_phase()
 	match phase:
 		_AIPhase.EARLY: return 250
 		_AIPhase.MID:   return 180
-		_AIPhase.LATE:  return 80    # Build even when tight if you have a monopoly
+		_AIPhase.LATE:  return 80
 	return 180
 
-# ── Helper: max rent of a fully developed tile ─────────────
 func _ai_tile_max_rent(tile) -> int:
 	var rents = tile.tile_data.get("rent", [0])
 	return rents[-1]
 
-# ── Helper: all color strings where this player has a monopoly ──
 func _ai_monopoly_colors(player) -> Array:
 	var result := []
 	for t in player.properties:
@@ -768,7 +731,6 @@ func _ai_monopoly_colors(player) -> Array:
 				result.append(c)
 	return result
 
-# ── Helper: how much blocking this tile from an opponent is worth ──
 func _ai_blocking_value(player, tile) -> int:
 	var color = tile.tile_data.get("color", "")
 	if color == "": return 0
@@ -780,20 +742,18 @@ func _ai_blocking_value(player, tile) -> int:
 				set_size += 1
 				if t.tile_owner == p: they_have += 1
 		if they_have == set_size - 1:
-			return int(tile.tile_data.get("price", 0) * 0.9)   # Worth almost full price to block
+			return int(tile.tile_data.get("price", 0) * 0.9)
 	return 0
 
-# ── Buy decision ───────────────────────────────────────────
 func _ai_should_buy(player, tile) -> bool:
 	var price    = tile.tile_data.get("price", 0)
 	var reserve  = _ai_reserve(player)
 	var phase    = _ai_game_phase()
 	var leftover = player.money - price
 
-	if leftover < reserve * 0.3: return false   # Hard floor — never go broke buying
+	if leftover < reserve * 0.3: return false
 
 	if tile.tile_type in [BoardData.TileType.CAFE, BoardData.TileType.UTILITY]:
-		# Cafes and utilities are good all game for their coverage
 		return phase != _AIPhase.LATE or leftover > reserve
 
 	var color    = tile.tile_data.get("color", "")
@@ -808,13 +768,13 @@ func _ai_should_buy(player, tile) -> bool:
 	var blocking_bonus = _ai_blocking_value(player, tile)
 
 	if completes_set:
-		return leftover > reserve * 0.2   # Almost always complete a set
+		return leftover > reserve * 0.2
 
 	if blocking_bonus > 0:
 		match phase:
 			_AIPhase.EARLY: return leftover > reserve * 0.5
 			_AIPhase.MID:   return leftover > reserve * 0.7
-			_AIPhase.LATE:  return false   # Too late to spend on blocking
+			_AIPhase.LATE:  return false
 
 	match phase:
 		_AIPhase.EARLY: return leftover > reserve * 0.75
@@ -825,8 +785,6 @@ func _ai_should_buy(player, tile) -> bool:
 			return contributes and leftover > reserve * 1.2
 	return false
 
-# ── Build ──────────────────────────────────────────────────
-# Prioritises reaching 3 houses (best ROI) before going higher.
 func _ai_try_build(player) -> bool:
 	var monopoly_colors = _ai_monopoly_colors(player)
 	if monopoly_colors.is_empty(): return false
@@ -853,27 +811,21 @@ func _ai_try_build(player) -> bool:
 			var rent_gain = float(next_rent - cur_rent)
 			var score     = rent_gain / max(build_cost, 1)
 
-			# Multiplier: strongly prioritise reaching 3 houses (peak ROI tier)
 			var next_level = t.funding + 1
-			if   next_level <= 3: score *= 2.0   # Getting to 3 is the priority
+			if   next_level <= 3: score *= 2.0
 			elif next_level == 4: score *= 1.3
-			# Hotel (5) gets no bonus — still worth doing but lower priority
 
 			if score > best_score:
 				best_score = score
 				best_tile  = t
 
 	if best_tile:
-		print("[AI] Building on: ", best_tile.tile_data.get("name","?"),
-			  " → level ", best_tile.funding + 1,
-			  " (score: ", snapped(best_score, 0.001), ")")
 		property_manager.execute_action(best_tile, "build", player)
 		ui.update_ui()
 		ui.show_property_details(best_tile, library_reward)
 		return true
 	return false
 
-# ── Unmortgage ─────────────────────────────────────────────
 func _ai_try_unmortgage(player) -> bool:
 	var reserve = _ai_reserve(player)
 	if player.money < reserve + AI_UNMORTGAGE_SURPLUS: return false
@@ -884,27 +836,21 @@ func _ai_try_unmortgage(player) -> bool:
 		if not property_manager.is_valid_for_action(t, "unmortgage", player, tiles): continue
 		var cost = int(t.tile_data.get("price", 0) * 0.55)
 		if player.money - cost < reserve: continue
-		# Prefer unmortgaging tiles that are part of a monopoly — immediate rent potential
 		var score = float(_ai_tile_max_rent(t))
 		var color = t.tile_data.get("color","")
 		if color != "" and board_state.has_monopoly(player, color):
-			score *= 1.8   # Much more valuable to restore a monopoly tile
+			score *= 1.8
 		if score > best_score:
 			best_score = score
 			best_tile  = t
 
 	if best_tile:
-		print("[AI] Unmortgaging: ", best_tile.tile_data.get("name","?"))
 		property_manager.execute_action(best_tile, "unmortgage", player)
 		ui.update_ui()
 		return true
 	return false
 
-# ── Emergency liquidation ──────────────────────────────────
-# Step 1: sell the building with the worst rent-per-cost (on the cheapest set).
-# Step 2: mortgage the property with the lowest strategic value.
 func _ai_emergency_liquidate(player) -> void:
-	# ── Sell a building ──
 	var sell_target = null
 	var worst_score = INF
 	for t in player.properties:
@@ -912,22 +858,15 @@ func _ai_emergency_liquidate(player) -> void:
 		var build_cost = board_state.get_investment_cost(t)
 		var rents      = t.tile_data.get("rent", [0])
 		var cur_rent   = float(rents[min(t.funding, rents.size() - 1)])
-		# Score: how much rent this building is earning per dollar invested
-		# Low score = bad investment = sell first
 		var score = cur_rent / max(build_cost, 1)
 		if score < worst_score:
 			worst_score  = score
 			sell_target  = t
 
 	if sell_target:
-		print("[AI] Selling building on: ", sell_target.tile_data.get("name","?"),
-			  " (worst ROI, level ", sell_target.funding, ")")
 		property_manager.execute_action(sell_target, "sell", player)
 		ui.update_ui()
 		return
-
-	# ── Mortgage a property ──
-	# Score by strategic value: high max-rent AND part of a monopoly = keep it.
 	var mort_target  = null
 	var lowest_value = INF
 	for t in player.properties:
@@ -935,25 +874,20 @@ func _ai_emergency_liquidate(player) -> void:
 		var value = float(_ai_tile_max_rent(t)) + t.tile_data.get("price", 0) * 0.05
 		var color = t.tile_data.get("color","")
 		if color != "" and board_state.has_monopoly(player, color):
-			value *= 2.0   # Really don't want to mortgage a monopoly tile
+			value *= 2.0
 		if value < lowest_value:
 			lowest_value = value
 			mort_target  = t
 
 	if mort_target:
-		print("[AI] Mortgaging: ", mort_target.tile_data.get("name","?"),
-			  " (value: ", snapped(lowest_value, 0.1), ")")
 		property_manager.execute_action(mort_target, "mortgage", player)
 		ui.update_ui()
 
-# ── Jail decision ──────────────────────────────────────────
-# (called from _handle_jail_turn — replaces the old inline logic)
 func _ai_jail_decision(player) -> void:
 	var can_pay  = player.money >= JAIL_FINE
 	var has_card = player.jail_free_cards > 0
 
 	if has_card:
-		print("[AI] Using jail-free card.")
 		_use_jail_card()
 		return
 
@@ -964,8 +898,6 @@ func _ai_jail_decision(player) -> void:
 
 	if can_pay:
 		var post_pay_money = player.money - JAIL_FINE
-		# Pay if: late game, or has monopoly to develop, or threat is high (need rent income),
-		# or has been stuck 2+ turns.
 		var should_pay = (
 			(phase == _AIPhase.LATE and post_pay_money > reserve) or
 			(has_mono and post_pay_money > reserve * 1.1) or
@@ -973,16 +905,12 @@ func _ai_jail_decision(player) -> void:
 			player.jail_turns >= 2
 		)
 		if should_pay:
-			print("[AI] Paying jail fine (threat: ", snapped(threat, 0.1),
-				  ", mono: ", has_mono, ", phase: ", phase, ")")
 			_pay_jail_fine()
 			return
 
-	# Stay in jail: safe from rent in early/mid with no monopoly
 	print("[AI] Rolling for doubles (shelter strategy).")
 	_roll_pressed()
 
-# ── Trade ──────────────────────────────────────────────────
 func _ai_try_trade(player, token: int) -> bool:
 	if ai_trade_attempted_this_turn: return false
 
@@ -1016,7 +944,7 @@ func _ai_try_trade(player, token: int) -> bool:
 				if ot.tile_type == BoardData.TileType.PROPERTY and ot.tile_data.get("color","") == offer_color:
 					offer_sz += 1
 					if ot.tile_owner == player: offer_has += 1
-			if offer_has >= offer_sz - 1: continue   # Protect near-complete sets
+			if offer_has >= offer_sz - 1: continue
 
 			var diff = abs(t.tile_data.get("price", 0) - wanted_price)
 			if diff < best_diff:
@@ -1024,9 +952,6 @@ func _ai_try_trade(player, token: int) -> bool:
 				offer_tile = t
 
 		if offer_tile == null or best_diff > 100: continue
-
-		print("[AI] ", player.player_name, " proposes trade: ",
-			  offer_tile.tile_data.get("name","?"), " ↔ ", wanted_tile.tile_data.get("name","?"))
 
 		ai_trade_attempted_this_turn = true
 		start_trade_with(target)
@@ -1043,7 +968,6 @@ func _ai_try_trade(player, token: int) -> bool:
 
 	return false
 
-# ── Incoming trade evaluation ──────────────────────────────
 func _ai_evaluate_incoming_trade() -> void:
 	await get_tree().create_timer(1.5).timeout
 	if not is_reviewing_trade: return
@@ -1066,6 +990,7 @@ func _ai_evaluate_incoming_trade() -> void:
 		for st in tiles:
 			if st.tile_type == BoardData.TileType.PROPERTY and st.tile_data.get("color","") == color:
 				sz += 1
+				@warning_ignore("shadowed_variable_base_class")
 				var owner = st.tile_owner
 				if st == t:              owner = p2
 				if st in trade.p2_props: owner = p1
@@ -1086,6 +1011,7 @@ func _ai_evaluate_incoming_trade() -> void:
 		for st in tiles:
 			if st.tile_type == BoardData.TileType.PROPERTY and st.tile_data.get("color","") == color:
 				sz += 1
+				@warning_ignore("shadowed_variable_base_class")
 				var owner = st.tile_owner
 				if st in trade.p2_props: owner = p1
 				if st in trade.p1_props: owner = p2
@@ -1094,6 +1020,7 @@ func _ai_evaluate_incoming_trade() -> void:
 
 	var near_bankrupt = p2.money < _ai_reserve(p2) * 0.5
 	var accept := false
+	@warning_ignore("unused_variable")
 	var reason := ""
 
 	if p2_loses_monopoly and not near_bankrupt:
@@ -1109,42 +1036,32 @@ func _ai_evaluate_incoming_trade() -> void:
 		accept = gain >= int(lose * 0.85)
 		reason = "standard value check"
 
-	print("[AI] ", p2.player_name, " evaluates trade | gain: $", gain, " lose: $", lose,
-		  " | loses_mono=", p2_loses_monopoly, " p1_gets_mono=", p1_gains_monopoly,
-		  " p2_completes=", p2_completes_set, " → ", reason)
+	#print("[Heuristic] ", p2.player_name, " evaluates trade | gain: $", gain, " lose: $", lose,
+		  #" | loses_mono=", p2_loses_monopoly, " p1_gets_mono=", p1_gains_monopoly,
+		  #" p2_completes=", p2_completes_set, " → ", reason)
 
 	if accept:
-		print("[AI] ACCEPTS")
 		_execute_trade()
 	else:
-		print("[AI] DECLINES")
 		_cancel_trade()
 
-# ── Master post-roll loop ──────────────────────────────────
 func _ai_take_turn_actions(player, token: int) -> void:
-	# 1. Build as many houses as budget allows — loop until nothing more to build
 	var built := true
 	while built:
 		await get_tree().create_timer(0.3).timeout
 		if token != turn_id or game_state != GameState.TURN_ACTIONS: return
 		built = _ai_try_build(player)
 
-	# 2. Unmortgage if comfortably flush
 	await get_tree().create_timer(0.25).timeout
 	if token != turn_id or game_state != GameState.TURN_ACTIONS: return
 	_ai_try_unmortgage(player)
 
-	# 3. One trade attempt per turn
 	if not ai_trade_attempted_this_turn:
 		await get_tree().create_timer(0.35).timeout
 		if token != turn_id or game_state != GameState.TURN_ACTIONS: return
 		var traded = await _ai_try_trade(player, token)
 		if traded: return
 
-	# 4. End turn
 	await get_tree().create_timer(0.35).timeout
 	if token != turn_id or game_state != GameState.TURN_ACTIONS: return
-	print("[AI] End turn. Balance: $", player.money,
-		  " | Reserve: $", _ai_reserve(player),
-		  " | Threat: ", snapped(_ai_threat_level(player), 0.1))
 	_end_turn()
