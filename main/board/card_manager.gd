@@ -8,74 +8,196 @@ var gc : Node3D
 #region Card Data
 
 const chance_cards := [
-	{"text": "You reported someone for harassment.", "type": "skip_other_turn"},
-	{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
-	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
-	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
-	{"text": "Director catches you for not walking on the footpath. Go back 3 spaces.", "type": "move", "value": -3},
-	{"text": "You bunk classes. Advance to the Library and collect the library reward.", "type": "move_to", "target": 20},
-	{"text": "You are caught misusing the water filter. Pay a fine of 50.", "type": "pay", "value": 50},
-	{"text": "Ishya celebrations begin! Advance to the Indoor Stadium.", "type": "move_to", "target": 11},
-	{"text": "The Director participates in a sports fest. Advance to the Volleyball Court.", "type": "move_to", "target": 8},
 
-	{"text": "Class cancelled! Take an extra turn.", "type": "extra_turn"},
-	{"text": "UPI payment system is down. Pay 30 in cash.", "type": "pay", "value": 30},
-	{"text": "Floor WiFi is down. Go back to CDH 2.", "type": "move_to", "target": 18},
+	# skip_other_turn (2)
+	{"text": "You have caught a player in the act of cyberbullying. Skip their turn.", "type": "skip_other_turn"},
+	{"text": "Login limit reached. You use someone else's email. Skip their turn.", "type": "skip_other_turn"},
+
+	# skip_turn (3)
+	{"text": "You are hit by a football! Skip a turn.", "type": "skip_turn"},
+	{"text": "Acid fly outrage! Skip a turn.", "type": "skip_turn"},
+	{"text": "Your hostel floor is infested by wasps! Skip a turn.", "type": "skip_turn"},
+
+	# swap_property (1)
+	{"text": "Identity fraud! Your ID card gets swapped. Swap a property.", "type": "swap_property"},
+
+	# negative_dice (2)
+	{"text": "You sat in the wrong exam hall. Roll Negative Dice.", "type": "negative_dice"},
+	{"text": "You are 1 day early to the exam hall. Roll Negative Dice.", "type": "negative_dice"},
+
+	# steal_property (1)
+	{"text": "Academic Office Error. Use this oppurtunity to obtain any valid a property.", "type": "steal_property"},
+
+
+	# move (13)
+	{"text": "Director catches you for not walking on the footpath. Go back 3 spaces.", "type": "move", "value": -3},
 	{"text": "You break your left phalange at the gym. Go back 6 spaces.", "type": "move", "value": -6},
-	{"text": "Someone at iCafe ate your sandwich. Collect 50 from everyone.", "type": "collect_all", "value": 50},
-	{"text": "You discover how to burn vegetable soup faster than stir-fried vegetables. Biology Block awards you 150.", "type": "collect", "value": 150},
-	{"text": "You got an A+ in a course. Take another turn.", "type": "extra_turn"},
-	{"text": "You encounter a wild boar. Flee to Humanities.", "type": "go_to_jail"},
 	{"text": "You sprint across campus. Advance 5 spaces.", "type": "move", "value": 5},
 	{"text": "You finally start walking on the footpath. Advance 3 spaces.", "type": "move", "value": 3},
-	{"text": "You accidentally paid your mess fees twice. Collect 100 refund.", "type": "collect", "value": 100},
-	{"text": "Massive UPI error! Swap your 25% money balance with a player of your choice.", "type": "swap_money"},
-	{"text": "Course review results are out. Sabotage! Pay 50 to each player.", "type": "pay_all", "value": 50},
-	{"text": "Exam correction was done conservatively this semester. Collect a 25 academic bonus.", "type": "collect", "value": 25},
 	{"text": "Your exam paper was not found. Move back 5 spaces in panic.", "type": "move", "value": -5},
-	{"text": "Homework is due in 10 minutes and ChatGPT is down. Lose 50 in stress.", "type": "pay", "value": 50},
 	{"text": "You finished your assignment 2 days early. Advance 4 spaces.", "type": "move", "value": 4},
-	{"text": "You completed the exam 1 hour early. Move forward 5 spaces.", "type": "move", "value": 5},
-	{"text": "You are forced to take a course you absolutely hate. Pay a 50 stress fee.", "type": "pay", "value": 50},
-	{"text": "You made a meme about the professor and it went viral. Collect 200.", "type": "collect", "value": 200},
+	{"text": "You completed the exam 1 hour early. Move forward 1 space.", "type": "move", "value": 1},
 	{"text": "You find a shortcut through campus. Advance 4 spaces.", "type": "move", "value": 4},
+	{"text": "Your PI gives you a free ride. Advance 7 spaces.", "type": "move", "value": 7},
+	{"text": "8AM classes cancelled. Advance 2 spaces.", "type": "move", "value": 2},
+	{"text": "Colloqium provided free snacks. You succumb to temptation. Go back 7 spaces.", "type": "move", "value": -7},
+	{"text": "Departmental Chai Time. Go back 1 space.", "type": "move", "value": -1},
+	{"text": "With great power, comes great responsibility. You spend your time doing an assignment. Advance 6 spaces.", "type": "move", "value": 6},
+
+
+# move_to (15)
+
+	{"text": "You bunk classes. Advance to the Library and collect the library reward.", "type": "move_to", "target": 20},
+	{"text": "Ishya celebrations begin! Advance to the Indoor Stadium.", "type": "move_to", "target": 11},
+	{"text": "The Director participates in a sports fest. Advance to the Volleyball Court.", "type": "move_to", "target": 8},
+	{"text": "Floor WiFi is down. Go back to CDH 2.", "type": "move_to", "target": 18},
+	{"text": "You rush for a submission. Head to LHC immediately.", "type": "move_to", "target": 27},
+	{"text": "Late night hunger hits. Go to I-Cafe.", "type": "move_to", "target": 25},
+	{"text": "You have a surprise lab exam. Report to PSB.", "type": "move_to", "target": 32},
+	{"text": "Free Cake! Head straight to Cake World.", "type": "move_to", "target": 35},
+	{"text": "Emergency player required. Advance to Basketball Court.", "type": "move_to", "target": 14},
+	{"text": "Gym motivation finally kicks in. Go to GYM.", "type": "move_to", "target": 13},
+	{"text": "You have a meeting with faculty. Go to Faculty Lounge.", "type": "move_to", "target": 28},
+	{"text": "Group study planned. Assemble at C Block.", "type": "move_to", "target": 21},
+	{"text": "You got lost in campus. Somehow end up at MSB.", "type": "move_to", "target": 31},
+	{"text": "Guest lecture by Walter White! Rush to CSB.", "type": "move_to", "target": 34},
+	{"text": "You finally decide to be productive. Go to CCC.", "type": "move_to", "target": 12},
+
+
+	# pay (4)
+	{"text": "You are caught misusing the water filter. Pay a fine of 50.", "type": "pay", "value": 50},
+	{"text": "UPI payment system is down. Pay 30 in cash.", "type": "pay", "value": 30},
+	{"text": "Homework is due in 10 minutes and ChatGPT is down. Lose 50 in stress.", "type": "pay", "value": 50},
+	{"text": "You are forced to take a course you absolutely hate. Pay a 50 stress fee.", "type": "pay", "value": 50},
+
+
+	# collect_all (1)
+	{"text": "Someone at iCafe ate your sandwich. Collect 50 from everyone.", "type": "collect_all", "value": 50},
+
+
+	# collect (5)
+	{"text": "You discover how to burn vegetable soup faster than stir-fried vegetables. Biology Block awards you 150.", "type": "collect", "value": 150},
+	{"text": "You accidentally paid your mess fees twice. Collect 100 refund.", "type": "collect", "value": 100},
+	{"text": "Exam correction was done conservatively this semester. Collect a 25 academic bonus.", "type": "collect", "value": 25},
+	{"text": "You made a meme about the professor and it went viral. Collect 200.", "type": "collect", "value": 200},
 	{"text": "Your CGPA suddenly increases after re-evaluation. Collect an academic scholarship of 150.", "type": "collect", "value": 150},
+
+
+	# extra_turn (3)
+	{"text": "Class cancelled! Take an extra turn.", "type": "extra_turn"},
+	{"text": "You got an A+ in a course. Take another turn.", "type": "extra_turn"},
 	{"text": "You attend a guest lecture that nobody else knows about. Take another turn.", "type": "extra_turn"},
-	{"text": "Academic Office Error. Use this oppurtunity to steal a property.", "type": "steal_property"}
+
+
+	# go_to_jail (5 total)
+
+	{"text": "You encounter a wild boar. Flee to Humanities.", "type": "go_to_jail"},
+	{"text": "Caught proxying attendance for a friend. Sent to Humanities.", "type": "go_to_jail"},
+	{"text": "You argued with the professor mid-lecture. Go to Humanities immediately.", "type": "go_to_jail"},
+	{"text": "You were caught sneaking into the hostel after curfew hours. Go to Humanities.", "type": "go_to_jail"},
+	{"text": "Mass bunk gone wrong. Everyone escapes except you. Go to Humanities.", "type": "go_to_jail"},
+
+
+	# swap_money (1)
+	{"text": "Massive UPI error! Get 25% money balance from a player of your choice.", "type": "swap_money"},
+
+
+	# pay_all (3 total)
+
+	{"text": "You give a party after getting AIR 17 in GATE. Pay 50 to each player.", "type": "pay_all", "value": 50},
+	{"text": "You forgot to contribute to a group project. Compensate everyone. Pay 40 to each player.", "type": "pay_all", "value": 40},
+	{"text": "You hosted freshers. Pay 30 to each player.", "type": "pay_all", "value": 30}
 ]
 
+
 const fund_cards := [
+
+	# go_to_jail (3)
 	{"text": "Classes announced on Saturday. Everyone must attend Humanities. Go to Jail.", "type": "go_to_jail"},
-	{"text": "Cake World promotion works in your favor. Collect 20.", "type": "collect", "value": 20},
-	{"text": "Tutorial sessions begin. Pay 50 for materials.", "type": "pay", "value": 50},
 	{"text": "You lack communication skills. Go to Humanities class. Do not pass GO.", "type": "go_to_jail"},
-	{"text": "You slept during Humanities class. Keep this card to skip Humanities once.", "type": "out_of_jail"},
-	{"text": "You attended Physics lecture. Pay 20 for notes.", "type": "pay", "value": 20},
 	{"text": "Caught using ChatGPT during an exam. Go straight to Humanities.", "type": "go_to_jail"},
-	{"text": "You throw a party at Tasty. Pay 30 to each player.", "type": "pay_all", "value": 30},
+
+
+# collect (16 total)
+
+	{"text": "Cake World promotion works in your favor. Collect 20.", "type": "collect", "value": 20},
+	{"text": "Scholarship announcement! Collect 150 from the bank.", "type": "collect", "value": 150},
+	{"text": "You volunteered at a campus event. Receive a 50 reward.", "type": "collect", "value": 50},
+	{"text": "The mess introduces a special dinner. Collect 30", "type": "collect", "value": 30},
+	{"text": "You found a coin in your old backpack. Collect 1.", "type": "collect", "value": 1},
+	{"text": "Your project got selected for funding. Collect 500.", "type": "collect", "value": 500},
+	{"text": "You win a campus quiz competition. Collect 80.", "type": "collect", "value": 80},
+	{"text": "Attendance bonus awarded by professor. Collect 25.", "type": "collect", "value": 25},
+	{"text": "You helped a senior with assignments. Collect 60.", "type": "collect", "value": 60},
+	{"text": "Unexpected stipend credited. Collect 120.", "type": "collect", "value": 120},
+	{"text": "You sell old books to juniors. Collect 50.", "type": "collect", "value": 50},
+	{"text": "Fest volunteering perks! Collect 70.", "type": "collect", "value": 70},
+	{"text": "You win an online coding contest. Collect 150.", "type": "collect", "value": 150},
+	{"text": "Mess rebate issued this month due to LPG issues. Collect 35.", "type": "collect", "value": 35},
+	{"text": "You are compensated on a compensation perspective. Collect 10.", "type": "collect", "value": 10},
+	{"text": "Startup idea gets initial funding. Collect 200.", "type": "collect", "value": 200},
+
+
+	# pay (16)
+	{"text": "Tutorial sessions begin. Pay 50 for materials.", "type": "pay", "value": 50},
+	{"text": "You attended Physics lecture. Pay 20 for notes.", "type": "pay", "value": 20},
 	{"text": "You throw a small party at Cake World. Pay 10.", "type": "pay", "value": 10},
 	{"text": "Water purifier repairs are needed. Pay 100 to the institute.", "type": "pay", "value": 100},
 	{"text": "You shout outside Anamudi and receive a fine. Pay 50.", "type": "pay", "value": 50},
-	{"text": "Physics practicals begin. Advance to PSB.", "type": "move_to", "target": 32},
 	{"text": "Your ID card is invalid. Pay a 25 replacement fee.", "type": "pay", "value": 25},
 	{"text": "You lost your room keys. Pay 10.", "type": "pay", "value": 10},
 	{"text": "You overate at Tasty. Pay 50 for medical bills.", "type": "pay", "value": 50},
 	{"text": "Mentor meeting begins. Pay 50 for snacks.", "type": "pay", "value": 50},
-	{"text": "Assignment deadline approaching. Go back 3 spaces to study.", "type": "move", "value": -3},
-	{"text": "You fail a course. Go back 5 spaces.", "type": "move", "value": -5},
-	{"text": "Too much coffee! Take another turn.", "type": "extra_turn"},
 	{"text": "Mess food was extremely oily today. Pay 30 for antacids.", "type": "pay", "value": 30},
-	{"text": "Holi celebration funds! Collect 20 from each player.", "type": "collect_all", "value": 20},
 	{"text": "Preparation for Freshers' event. Pay 200 contribution.", "type": "pay", "value": 200},
 	{"text": "Institute builds a new main gate. Pay 100 campus development charge.", "type": "pay", "value": 100},
 	{"text": "Institute invests in a faculty lounge. Contribute 50 to the fund.", "type": "pay", "value": 50},
 	{"text": "Your CGPA drops after a tough semester. Pay a 75 stress penalty.", "type": "pay", "value": 75},
-	{"text": "Scholarship announcement! Collect 150 from the bank.", "type": "collect", "value": 150},
 	{"text": "Lab equipment breaks during your experiment. Pay 100 repair charges.", "type": "pay", "value": 100},
-	{"text": "You volunteered at a campus event. Receive a 50 reward.", "type": "collect", "value": 50},
-	{"text": "The mess introduces a special dinner. Collect 30", "type": "collect", "value": 30},
-	{"text": "Rawaaz preperations begin. Pay 100.", "type": "pay", "value": 100}
+	{"text": "Rawaaz preperations begin. Pay 100.", "type": "pay", "value": 100},
+
+
+	# pay_all (4 total)
+
+	{"text": "You throw a party at Tasty. Pay 30 to each player.", "type": "pay_all", "value": 30},
+	{"text": "You forgot a group dinner bill. Pay 25 to each player.", "type": "pay_all", "value": 25},
+	{"text": "You borrowed notes from everyone and never returned them. Pay 20 to each player.", "type": "pay_all", "value": 20},
+	{"text": "You organized a trip and miscalculated costs. Pay 40 to each player.", "type": "pay_all", "value": 40},
+
+
+# out_of_jail (4 total)
+
+	{"text": "You slept during Humanities class. Keep this card to skip Humanities once.", "type": "out_of_jail"},
+	{"text": "You got special permission from the professor. Skip Humanities once.", "type": "out_of_jail"},
+	{"text": "Medical certificate approved! Skip Humanities once.", "type": "out_of_jail"},
+	{"text": "You convinced the warden with a valid excuse. Skip Humanities once.", "type": "out_of_jail"},
+
+	# move_to (1)
+	{"text": "Physics practicals begin. Advance to PSB.", "type": "move_to", "target": 32},
+
+
+	# move (2)
+	{"text": "Assignment deadline approaching. Go back 3 spaces to study.", "type": "move", "value": -3},
+	{"text": "You fail a course. Go back 5 spaces.", "type": "move", "value": -5},
+
+
+	# extra_turn (3 total)
+
+	{"text": "Too much coffee! Take another turn.", "type": "extra_turn"},
+	{"text": "You woke up early and feel productive. Take another turn.", "type": "extra_turn"},
+	{"text": "Unexpected free time between classes. Take another turn.", "type": "extra_turn"},
+
+
+# collect_all (4 total)
+
+	{"text": "Holi celebration funds! Collect 20 from each player.", "type": "collect_all", "value": 20},
+	{"text": "You helped everyone before exams. Collect 15 from each player.", "type": "collect_all", "value": 15},
+	{"text": "Your birthday! Everyone chips in. Collect 25 from each player.", "type": "collect_all", "value": 25},
+	{"text": "You distributed rubber band in SDA class. Collect 1 from each player.", "type": "collect_all", "value": 1},
+	{"text": "You make a joke so good, people start throwing money at you. Collect 67 from each player.", "type": "collect_all", "value": 67}
 ]
+
+
 
 #endregion
 

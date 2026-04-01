@@ -59,7 +59,7 @@ func _try_emit() -> void:
 	is_rolling = false
 	print("Both dice finished. Emitting result: ", die1_result, " ", die2_result)
 	dice_result.emit(die1_result, die2_result)
-	#dice_result.emit(2,0)
+	#dice_result.emit(7,0)
 
 func _safety_timeout() -> void:
 	await get_tree().create_timer(SAFETY_TIMEOUT).timeout

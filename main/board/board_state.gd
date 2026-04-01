@@ -3,7 +3,7 @@ var tiles = []
 @onready var game_controller = $"../../GameController"
 
 func _ready(): #gets tiles node children
-	await get_tree().process_frame # wait for board setup
+	await get_tree().process_frame
 	tiles = $"../Tiles".get_children()
 
 func get_tiles(): # returns tiles array
