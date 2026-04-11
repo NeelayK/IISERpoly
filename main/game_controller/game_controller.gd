@@ -55,7 +55,6 @@ func _ready():
 	auction_manager.auction_finished.connect(_on_auction_finished)
 	property_manager.setup(board_state)
 	card_manager.setup(self)
-	
 	ui.player_hovered.connect(_on_player_ui_hovered)
 	ui.player_unhovered.connect(_on_player_ui_unhovered)
 	

@@ -84,7 +84,7 @@ alignment = 1
 
 [node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox" unique_id=1993788988]
 layout_mode = 2
-text = "Settings"
+text = "Settings (PC only)"
 horizontal_alignment = 1
 
 [node name="Display" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=1264725577]
@@ -116,6 +116,7 @@ custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
 [node name="Volume" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=1889538040]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 410
 alignment = 1
