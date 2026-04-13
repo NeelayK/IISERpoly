@@ -22,6 +22,12 @@ ssr_enabled = true
 ssr_max_steps = 32
 ssao_intensity = 1.5
 
+[sub_resource type="Environment" id="Environment_j30hl"]
+background_mode = 3
+glow_enabled = true
+glow_intensity = 1.0
+glow_bloom = 0.4
+
 [node name="MainMenu" type="Node3D" unique_id=179603278]
 script = ExtResource("1_q6wqb")
 
@@ -29,6 +35,9 @@ script = ExtResource("1_q6wqb")
 environment = SubResource("Environment_6fq81")
 
 [node name="UILayer" type="CanvasLayer" parent="." unique_id=548160782]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="UILayer" unique_id=1353977939]
+environment = SubResource("Environment_j30hl")
 
 [node name="MainPanel" type="VBoxContainer" parent="UILayer" unique_id=14419477]
 custom_minimum_size = Vector2(300, 300)
