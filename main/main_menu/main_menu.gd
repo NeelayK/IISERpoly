@@ -1,7 +1,8 @@
-extends Node3D
+extends Node
 
 @onready var main_panel = $UILayer/MainPanel
 @onready var settings_panel = $UILayer/SettingsPanel
+@onready var settings_button = $UILayer/MainPanel/SettingsBtn
 @onready var play_setup_panel = $UILayer/PlaySetupPanel
 @onready var player_list = $UILayer/PlaySetupPanel/VBox/PlayerList
 @onready var camera = $Camera3D
@@ -11,6 +12,11 @@ var pending_settings = {"mode": DisplayServer.WINDOW_MODE_WINDOWED, "res": Vecto
 
 func _ready():
 		_show_panel(main_panel)
+		var d = Time.get_date_dict_from_system()
+
+		$UILayer/MainPanel/Time.text = "Credits: 0%02d" % [d.day]
+		if not OS.has_feature("mobile"):
+			settings_button.disabled = true
 		main_panel.get_node("PlayBtn").pressed.connect(func(): _show_panel(play_setup_panel))
 		main_panel.get_node("SettingsBtn").pressed.connect(func(): _show_panel(settings_panel))
 		main_panel.get_node("QuitBtn").pressed.connect(func(): get_tree().quit())

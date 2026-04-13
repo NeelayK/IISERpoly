@@ -1,0 +1,26 @@
+[gd_resource type="Theme" format=3 uid="uid://cdl14ulkv4bkx"]
+
+[ext_resource type="FontFile" uid="uid://bccn73tokjobo" path="res://materials/Font/default.ttf" id="1_m042q"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6fq81"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ypvuc"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_m042q"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m042q"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[resource]
+default_font = ExtResource("1_m042q")
+default_font_size = 40
+Button/colors/font_hover_color = Color(1, 0.16078432, 0.45882353, 1)
+Button/styles/hover = SubResource("StyleBoxEmpty_6fq81")
+Button/styles/normal = SubResource("StyleBoxEmpty_ypvuc")
+PopupMenu/colors/font_hover_color = Color(0.6901961, 0, 1, 1)
+PopupMenu/styles/hover = SubResource("StyleBoxEmpty_m042q")
+PopupMenu/styles/panel = SubResource("StyleBoxFlat_m042q")

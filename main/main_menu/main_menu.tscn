@@ -2,89 +2,288 @@
 
 [ext_resource type="Theme" uid="uid://cx6f3r151epnl" path="res://materials/themes/font_theme.tres" id="1_10lxw"]
 [ext_resource type="Script" uid="uid://d4acw38mausvy" path="res://main/main_menu/main_menu.gd" id="1_q6wqb"]
-[ext_resource type="Texture2D" uid="uid://da2lxtjpsj1u6" path="res://materials/HDRI/hdri.hdr" id="3_j30hl"]
-
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_jof6o"]
-panorama = ExtResource("3_j30hl")
-
-[sub_resource type="Sky" id="Sky_021v2"]
-sky_material = SubResource("PanoramaSkyMaterial_jof6o")
-
-[sub_resource type="Environment" id="Environment_6fq81"]
-background_mode = 2
-background_energy_multiplier = 0.5
-sky = SubResource("Sky_021v2")
-sky_rotation = Vector3(-0.57595867, -1.7662733, -5.5588737)
-ambient_light_source = 3
-ambient_light_energy = 0.6
-tonemap_mode = 3
-ssr_enabled = true
-ssr_max_steps = 32
-ssao_intensity = 1.5
+[ext_resource type="Shader" uid="uid://dy5bpmkbacp4e" path="res://main/main_menu/main_menu.gdshader" id="2_6fq81"]
+[ext_resource type="FontFile" uid="uid://cn5f4okjmsid5" path="res://materials/Font/title.ttf" id="3_jof6o"]
+[ext_resource type="FontFile" uid="uid://bccn73tokjobo" path="res://materials/Font/default.ttf" id="4_6fq81"]
+[ext_resource type="Theme" uid="uid://cdl14ulkv4bkx" path="res://materials/themes/button_theme.tres" id="5_mrrnu"]
+[ext_resource type="Script" uid="uid://cpfmmhw2g4txw" path="res://main/main_menu/play_btn.gd" id="5_ypvuc"]
 
 [sub_resource type="Environment" id="Environment_j30hl"]
 background_mode = 3
+background_canvas_max_layer = 1
+ambient_light_color = Color(0.76337266, 0.0008001256, 0.82323813, 1)
+tonemap_exposure = 1.65
 glow_enabled = true
-glow_intensity = 1.0
-glow_bloom = 0.4
+glow_strength = 1.45
+glow_bloom = 0.3
 
-[node name="MainMenu" type="Node3D" unique_id=179603278]
+[sub_resource type="Shader" id="Shader_ypvuc"]
+code = "shader_type canvas_item;
+//took it directly from balatro source code
+//buy balatro now: https://www.playbalatro.com
+
+
+uniform highp float spin_rotation_speed = 2.0;
+uniform highp float move_speed = 7.0;
+uniform highp vec2 offset = vec2(0., 0.);
+uniform highp vec4 colour_1 : source_color = vec4(0.871, 0.267, 0.231, 1.0);
+uniform highp vec4 colour_2 : source_color = vec4(0.0, 0.42, 0.706, 1.0);
+uniform highp vec4 colour_3 : source_color = vec4(0.086, 0.137, 0.145, 1.0);
+uniform highp float contrast = 3.5;
+uniform highp float lighting = 0.4;
+uniform highp float spin_amount = 0.25;
+uniform highp float pixel_filter = 740.;
+uniform bool is_rotating = false;
+#define SPIN_EASE 1.0
+
+
+vec4 effect(vec2 screenSize, vec2 screen_coords){
+
+	highp float pixel_size = length(screenSize.xy) / pixel_filter;
+    highp vec2 uv = (floor(screen_coords.xy*(1./pixel_size))*pixel_size - 0.5*screenSize.xy)/length(screenSize.xy) - offset;
+    highp float uv_len = length(uv);
+
+
+    highp float speed = (spin_rotation_speed*SPIN_EASE*0.2);
+	if(is_rotating){
+		speed = TIME * speed;
+	}
+	speed += 302.2;
+    highp float new_pixel_angle = (atan(uv.y, uv.x)) + speed - SPIN_EASE*20.*(1.*spin_amount*uv_len + (1. - 1.*spin_amount));
+    highp vec2 mid = (screenSize.xy/length(screenSize.xy))/2.;
+    uv = (vec2((uv_len * cos(new_pixel_angle) + mid.x), (uv_len * sin(new_pixel_angle) + mid.y)) - mid);
+
+    uv *= 30.;
+    speed = TIME*(move_speed);
+	highp vec2 uv2 = vec2(uv.x+uv.y);
+
+	for(int i=0; i < 5; i++) {
+		uv2 += sin(max(uv.x, uv.y)) + uv;
+		uv  += 0.5*vec2(cos(5.1123314 + 0.353*uv2.y + speed*0.131121),sin(uv2.x - 0.113*speed));
+		uv  -= 1.0*cos(uv.x + uv.y) - 1.0*sin(uv.x*0.711 - uv.y);
+	}
+
+
+    highp float contrast_mod = (0.25*contrast + 0.5*spin_amount + 1.2);
+	highp float paint_res = min(2., max(0.,length(uv)*(0.035)*contrast_mod));
+    highp float c1p = max(0.,1. - contrast_mod*abs(1.-paint_res));
+    highp float c2p = max(0.,1. - contrast_mod*abs(paint_res));
+    highp float c3p = 1. - min(1., c1p + c2p);
+	
+	highp float ligth = (lighting - 0.2) * max(c1p*5. - 4., 0.) + lighting * max(c2p*5. - 4., 0.); 
+	highp vec4 ret_col = (0.3/contrast)*colour_1 + (1. - 0.3/contrast)*(colour_1*c1p + colour_2*c2p + vec4(c3p*colour_3.rgb, c3p*colour_1.a)) + ligth;
+	return ret_col;
+}
+
+
+void fragment() {
+    vec2 uv = UV;
+	COLOR *= effect(TEXTURE_PIXEL_SIZE, uv);
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mrrnu"]
+shader = SubResource("Shader_ypvuc")
+shader_parameter/spin_rotation_speed = 2.0
+shader_parameter/move_speed = 7.0
+shader_parameter/offset = Vector2(0, 0)
+shader_parameter/colour_1 = Color(0, 0, 0, 1)
+shader_parameter/colour_2 = Color(0.5853775, 0.39088342, 0, 1)
+shader_parameter/colour_3 = Color(0.2616481, 0, 0.08431662, 1)
+shader_parameter/contrast = 4.0
+shader_parameter/lighting = 0.1
+shader_parameter/spin_amount = 0.25
+shader_parameter/pixel_filter = 740.0
+shader_parameter/is_rotating = false
+
+[sub_resource type="Theme" id="Theme_ypvuc"]
+default_font = ExtResource("3_jof6o")
+default_font_size = 70
+
+[sub_resource type="Theme" id="Theme_ksu4j"]
+default_font = ExtResource("4_6fq81")
+default_font_size = 40
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_mrrnu"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6fq81"]
+shader = ExtResource("2_6fq81")
+shader_parameter/overlay = false
+shader_parameter/scanlines_opacity = 0.262000012445
+shader_parameter/scanlines_width = 0.25
+shader_parameter/grille_opacity = 0.2830000134425
+shader_parameter/resolution = Vector2(640, 240)
+shader_parameter/pixelate = false
+shader_parameter/roll = true
+shader_parameter/roll_speed = 1.5
+shader_parameter/roll_size = 15.0
+shader_parameter/roll_variation = 1.8
+shader_parameter/distort_intensity = 0.010000000475
+shader_parameter/noise_opacity = 0.0670000031825
+shader_parameter/noise_speed = 1.0
+shader_parameter/static_noise_intensity = 0.02000000095
+shader_parameter/aberration = 0.010000047974999982
+shader_parameter/brightness = 1.0
+shader_parameter/discolor = true
+shader_parameter/warp_amount = 0.3450000163875
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.3450000163875
+
+[node name="MainMenu" type="Node2D" unique_id=1471649901]
 script = ExtResource("1_q6wqb")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=735226018]
-environment = SubResource("Environment_6fq81")
-
-[node name="UILayer" type="CanvasLayer" parent="." unique_id=548160782]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="UILayer" unique_id=1353977939]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1353977939]
 environment = SubResource("Environment_j30hl")
 
-[node name="MainPanel" type="VBoxContainer" parent="UILayer" unique_id=14419477]
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=548160782]
+offset = Vector2(64, 36)
+scale = Vector2(0.9, 0.9)
+transform = Transform2D(0.9, 0, 0, 0.9, 64, 36)
+
+[node name="Noise" type="ColorRect" parent="UILayer" unique_id=1060429971]
+material = SubResource("ShaderMaterial_mrrnu")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="MainPanel" type="Control" parent="UILayer" unique_id=1085324718]
 custom_minimum_size = Vector2(300, 300)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -150.0
-offset_right = 150.0
-offset_bottom = 150.0
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
 theme = ExtResource("1_10lxw")
-alignment = 1
 
-[node name="PlayBtn" type="Button" parent="UILayer/MainPanel" unique_id=2060311267]
-layout_mode = 2
-size_flags_vertical = 3
-text = "Play"
-
-[node name="SettingsBtn" type="Button" parent="UILayer/MainPanel" unique_id=579172893]
-layout_mode = 2
-size_flags_vertical = 3
-text = "Settings"
-
-[node name="QuitBtn" type="Button" parent="UILayer/MainPanel" unique_id=1779389027]
-layout_mode = 2
-size_flags_vertical = 3
-text = "Quit"
-
-[node name="SettingsPanel" type="PanelContainer" parent="UILayer" unique_id=465760267]
-visible = false
+[node name="Title" type="Label" parent="UILayer/MainPanel" unique_id=821734910]
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -476.0
-offset_top = -277.0
-offset_right = 476.0
-offset_bottom = 277.0
+offset_left = -361.0
+offset_top = -159.0
+offset_right = 362.0
+offset_bottom = -3.5
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_10lxw")
+theme = SubResource("Theme_ypvuc")
+theme_override_colors/font_color = Color(1, 0.827451, 0.019607844, 1)
+text = "IISER-POLY"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Version" type="Label" parent="UILayer/MainPanel" unique_id=576912209]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 134.44446
+offset_top = 237.77783
+offset_right = 857.44446
+offset_bottom = 393.27783
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_ksu4j")
+text = "v0.1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Time" type="Label" parent="UILayer/MainPanel" unique_id=215882057]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -783.3334
+offset_top = -360.0
+offset_right = -60.333374
+offset_bottom = -204.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_ksu4j")
+text = "Credits: "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayBtn" type="Button" parent="UILayer/MainPanel" unique_id=2060311267]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -41.0
+offset_right = 272.0
+offset_bottom = 13.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme = ExtResource("5_mrrnu")
+theme_type_variation = &"FlatButton"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 0.5647059, 0.12156863, 1)
+text = "Click Here To Start A Game"
+script = ExtResource("5_ypvuc")
+
+[node name="SettingsBtn" type="Button" parent="UILayer/MainPanel" unique_id=17028394]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 321.0
+offset_top = 238.0
+offset_right = 604.0
+offset_bottom = 292.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme = ExtResource("5_mrrnu")
+theme_type_variation = &"FlatButton"
+theme_override_colors/font_color = Color(0.875, 0.875, 0.875, 1)
+text = "Settings"
+
+[node name="QuitBtn" type="Button" parent="UILayer/MainPanel" unique_id=1524428485]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -628.0
+offset_top = 239.0
+offset_right = -345.0
+offset_bottom = 293.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme = ExtResource("5_mrrnu")
+theme_type_variation = &"FlatButton"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Quit"
+
+[node name="SettingsPanel" type="PanelContainer" parent="UILayer" unique_id=465760267]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("5_mrrnu")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_mrrnu")
 
 [node name="VBox" type="VBoxContainer" parent="UILayer/SettingsPanel" unique_id=1414007921]
 layout_mode = 2
@@ -143,6 +342,7 @@ layout_mode = 2
 custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 4
+theme = ExtResource("5_mrrnu")
 alignment = 1
 
 [node name="ApplyBtn" type="Button" parent="UILayer/SettingsPanel/VBox/HBox" unique_id=1845486433]
@@ -159,18 +359,12 @@ text = "Back"
 
 [node name="PlaySetupPanel" type="PanelContainer" parent="UILayer" unique_id=592952764]
 visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -476.0
-offset_top = -277.0
-offset_right = 476.0
-offset_bottom = 277.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_10lxw")
+theme = ExtResource("5_mrrnu")
 
 [node name="VBox" type="VBoxContainer" parent="UILayer/PlaySetupPanel" unique_id=1947011742]
 layout_mode = 2
@@ -186,7 +380,7 @@ horizontal_alignment = 1
 layout_mode = 2
 
 [node name="HBox1" type="HBoxContainer" parent="UILayer/PlaySetupPanel/VBox" unique_id=565743979]
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(900, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 alignment = 1
@@ -206,7 +400,7 @@ size_flags_vertical = 3
 text = "Remove Player"
 
 [node name="HBox" type="HBoxContainer" parent="UILayer/PlaySetupPanel/VBox" unique_id=260604414]
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(400, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 alignment = 1
@@ -225,3 +419,16 @@ text = "Back"
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=692719819]
 transform = Transform3D(0.9953962, -0.06350931, 0.07178422, 0, 0.74895567, 0.66262, -0.09584575, -0.65956944, 0.7455076, 0, 0, 1.3401586)
+current = true
+
+[node name="PostProcessing" type="CanvasLayer" parent="." unique_id=984389293]
+layer = 3
+
+[node name="MonitorLines" type="ColorRect" parent="PostProcessing" unique_id=1971094947]
+material = SubResource("ShaderMaterial_6fq81")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

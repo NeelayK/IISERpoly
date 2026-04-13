@@ -1,7 +1,7 @@
 [gd_resource type="Theme" format=3 uid="uid://cx6f3r151epnl"]
 
-[ext_resource type="FontFile" uid="uid://dvj0gf8kx64v0" path="res://materials/Font/JMH Typewriter.otf" id="1_0h7g3"]
+[ext_resource type="FontFile" uid="uid://bccn73tokjobo" path="res://materials/Font/default.ttf" id="1_0h7g3"]
 
 [resource]
 default_font = ExtResource("1_0h7g3")
-default_font_size = 20
+default_font_size = 70

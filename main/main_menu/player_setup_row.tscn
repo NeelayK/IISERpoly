@@ -8,12 +8,12 @@ grow_horizontal = 2
 alignment = 1
 
 [node name="NameInput" type="LineEdit" parent="." unique_id=1966007494]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 text = "Player Name"
 
 [node name="TypeSelect" type="OptionButton" parent="." unique_id=1442817741]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
 [node name="ShinySelect" type="OptionButton" parent="." unique_id=1553070667]
