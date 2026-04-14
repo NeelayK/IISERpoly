@@ -17,6 +17,7 @@ func _ready():
 	dice2 = dice_scene.instantiate()
 	add_child(dice1)
 	add_child(dice2)
+	
 	dice1.roll_finished.connect(_on_die1_finished)
 	dice2.roll_finished.connect(_on_die2_finished)
 

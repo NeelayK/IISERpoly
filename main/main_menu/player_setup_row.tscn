@@ -10,7 +10,8 @@ alignment = 1
 [node name="NameInput" type="LineEdit" parent="." unique_id=1966007494]
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
-text = "Player Name"
+text = "Player1"
+max_length = 8
 
 [node name="TypeSelect" type="OptionButton" parent="." unique_id=1442817741]
 custom_minimum_size = Vector2(150, 0)

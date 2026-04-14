@@ -4,7 +4,7 @@ signal tile_clicked(tile)
 
 const DEFAULT_MATERIAL = preload("res://materials/Tile/Tile.tres")
 const INK_COLOR = Color("#2e2a28")
-const FONT_SIZE_MULTIPLIER = 1.5
+const FONT_SIZE_MULTIPLIER = 2
 const LABEL_HEIGHT := 0.105
 const TILE_SIZE := Vector3(1.25, 0.2, 2.0)
 const CORNER_SIZE := Vector3(2.0, 0.2, 2.0)

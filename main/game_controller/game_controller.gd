@@ -316,6 +316,23 @@ func spawn_players():
 		players.append(new_player)
 
 func start_turn():
+	var nebula_color = GameConfig.player_data[current_player].color
+	var board = $"../Environment/Board"
+	var param_name = "albedo"
+	
+	# Try to get the current instance color; if null, use the shader's default orange
+	var start_color = board.get_instance_shader_parameter(param_name)
+	if start_color == null:
+		start_color = Color(1.0, 0.5, 0.3, 1.0) 
+
+	var tween = create_tween()
+	tween.tween_method(
+		func(c): board.set_instance_shader_parameter(param_name, c),
+		start_color,
+		nebula_color,
+		0.5
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT) # Make it smoother!
+	
 	turn_id += 1
 	var current_turn_token = turn_id
 	ai_trade_attempted_this_turn = false

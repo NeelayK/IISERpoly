@@ -14,6 +14,7 @@ const CLICK_SOUNDS: Array[String] = [
 	"res://assets/sounds/Boom1.wav"
 ]
 
+var easter_egg_add_player_button:int = -1
 var ui_base_offset: Vector2 = Vector2.ZERO
 var player_row_scene = preload("res://main/main_menu/player_setup_row.tscn")
 var pending_settings  = {"mode": DisplayServer.WINDOW_MODE_WINDOWED, "res": Vector2i(1280, 720)}
@@ -187,13 +188,29 @@ func _apply_settings():
 # ── Player rows ───────────────────────────────────────────────────────────────
 
 func _add_player_row():
-	if player_list.get_child_count() >= 6:
-		return
-
+	var player_count:int =player_list.get_child_count()
+	if player_count >= 6:
+		easter_egg_add_player_button += 1
+		match easter_egg_add_player_button:
+			0:
+				$UILayer/PlaySetupPanel/VBox/HBox1/AddPlayerBtn.text = "Max Players"
+				return
+			1:
+				$UILayer/PlaySetupPanel/VBox/HBox1/AddPlayerBtn.text = "Can you read?"
+				return
+			2:
+				$UILayer/PlaySetupPanel/VBox/HBox1/AddPlayerBtn.text = "I'm not doing this"
+				return
+			3:
+				$UILayer/PlaySetupPanel/VBox/HBox1/AddPlayerBtn.text = "Ugh."
+				return
+			_:
+				$UILayer/PlaySetupPanel/VBox/HBox1/AddPlayerBtn.text = "STOP"
+				return
 	var row           = player_row_scene.instantiate()
 	player_list.add_child(row)
 	var idx           = row.get_index()
-
+	row.get_node("NameInput").text = "Player%d" % [player_count+1]
 	var viewport      = row.get_node("FigurineView/SubViewport")
 	viewport.own_world_3d = true
 
@@ -249,6 +266,7 @@ func _add_player_row():
 
 func _rem_player_row():
 	var rows = player_list.get_children()
+	easter_egg_add_player_button = -1
 	if rows.size() > 2:
 		rows[-1].queue_free()
 

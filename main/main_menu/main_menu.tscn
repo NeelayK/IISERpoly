@@ -195,7 +195,7 @@ offset_bottom = 393.27777
 grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_ksu4j")
-text = "v0.1
+text = "v1.0
 Made with Godot"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -384,14 +384,14 @@ layout_mode = 2
 size_flags_horizontal = 4
 alignment = 1
 
-[node name="AddPlayerBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox1" unique_id=669870895]
+[node name="AddPlayerBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox1" unique_id=669870895 groups=["JuicyButtons"]]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Add Player"
 
-[node name="RemPlayerBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox1" unique_id=576936552]
+[node name="RemPlayerBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox1" unique_id=576936552 groups=["JuicyButtons"]]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 3

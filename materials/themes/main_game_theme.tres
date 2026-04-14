@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://f3fgt40yf6sv"]
+
+[ext_resource type="FontFile" uid="uid://bccn73tokjobo" path="res://materials/Font/default.ttf" id="1_lkl67"]
+
+[resource]
+default_font = ExtResource("1_lkl67")
+default_font_size = 25

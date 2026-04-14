@@ -11,33 +11,25 @@
 [ext_resource type="Script" uid="uid://ca3r4bqeum6d4" path="res://main/game_controller/auction_manager.gd" id="8_wcq3i"]
 [ext_resource type="Script" uid="uid://dfy7ak7bawpqf" path="res://main/game_controller/property_manager.gd" id="9_4ijfq"]
 [ext_resource type="Script" uid="uid://cve7iud4b7ck" path="res://main/board/card_manager.gd" id="10_3lxql"]
+[ext_resource type="Shader" uid="uid://dwaj4inip138d" path="res://main/board_items/board.gdshader" id="12_sdi6l"]
 [ext_resource type="Script" uid="uid://bfkxeaydd1sc1" path="res://main/ui/camera_rig.gd" id="15_sveyw"]
 [ext_resource type="PackedScene" uid="uid://dfgdebdcat2yf" path="res://main/ui/auction_panel.tscn" id="15_wcq3i"]
 [ext_resource type="Script" uid="uid://2mhklwmigp76" path="res://main/ui/ui.gd" id="15_xug3m"]
+[ext_resource type="Theme" uid="uid://f3fgt40yf6sv" path="res://materials/themes/main_game_theme.tres" id="16_sdi6l"]
 [ext_resource type="PackedScene" uid="uid://dspm7kjffpwnl" path="res://main/ui/player_hud.tscn" id="16_sveyw"]
+[ext_resource type="Theme" uid="uid://cdl14ulkv4bkx" path="res://materials/themes/button_theme.tres" id="16_ysp8t"]
 [ext_resource type="PackedScene" uid="uid://bwfrpoqso0ifx" path="res://main/ui/action_button.tscn" id="17_wcq3i"]
-[ext_resource type="Texture2D" uid="uid://da2lxtjpsj1u6" path="res://materials/HDRI/hdri.hdr" id="18_8nvx8"]
+[ext_resource type="FontFile" uid="uid://bccn73tokjobo" path="res://materials/Font/default.ttf" id="20_fcet5"]
 [ext_resource type="StyleBox" uid="uid://cv7n13qwfbo24" path="res://materials/themes/panel_theme.tres" id="25_x7q1m"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kwtg8"]
-transparency = 1
-cull_mode = 1
-specular_mode = 1
-albedo_color = Color(0, 0, 0, 0.85490197)
-metallic = 1.0
-roughness = 0.25
-refraction_enabled = true
-refraction_scale = 0.04
-uv1_scale = Vector3(3, 3, 3)
-disable_receive_shadows = true
-stencil_flags = 2
-stencil_color = Color(1, 1, 1, 1)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yv0cm"]
+render_priority = 0
+shader = ExtResource("12_sdi6l")
 
 [sub_resource type="BoxMesh" id="BoxMesh_kwtg8"]
 size = Vector3(15.3, 0.2, 15.3)
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_x7q1m"]
-panorama = ExtResource("18_8nvx8")
 
 [sub_resource type="Sky" id="Sky_3lxql"]
 sky_material = SubResource("PanoramaSkyMaterial_x7q1m")
@@ -50,13 +42,285 @@ sky_rotation = Vector3(-0.57595867, -1.7662733, -5.5588737)
 ambient_light_source = 3
 ambient_light_energy = 0.6
 tonemap_mode = 3
-ssr_enabled = true
 ssr_max_steps = 32
 ssao_intensity = 1.5
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_hckit"]
 
 [sub_resource type="Theme" id="Theme_021v2"]
+
+[sub_resource type="Theme" id="Theme_sdi6l"]
+default_font_size = 30
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sdi6l"]
+bg_color = Color(0, 0, 0, 0.87058824)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="Theme" id="Theme_yv0cm"]
+default_font = ExtResource("20_fcet5")
+default_font_size = 50
+Button/colors/font_hover_color = Color(0.9929939, 0, 0.53562623, 1)
+Button/styles/normal = SubResource("StyleBoxFlat_sdi6l")
+
+[sub_resource type="Shader" id="Shader_6xlih"]
+code = "/*
+Shader from Godot Shaders - the free shader library.
+godotshaders.com/shader/VHS-and-CRT-monitor-effect
+
+This shader is under CC0 license. Feel free to use, improve and 
+change this shader according to your needs and consider sharing 
+the modified result to godotshaders.com.
+*/
+
+shader_type canvas_item;
+uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
+
+
+//*** IMPORTANT! ***/ 
+// - If you are using this shader to affect the node it is applied to set 'overlay' to false (unchecked in the instepctor).
+// - If you are using this shader as an overlay, and want the shader to affect the nodes below in the Scene hierarchy,
+//   set 'overlay' to true (checked in the inspector).
+// On Mac there is potentially a bug causing this to not work properly. If that is the case and you want to use the shader as an overlay
+// change all \"overlay ? SCREEN_TEXTURE : TEXTURE\" to only \"SCREEN_TEXTURE\" on lines 129-140, and \"vec2 uv = overlay ? warp(SCREEN_UV) : warp(UV);\"
+// to \"vec2 uv = warp(SCREEN_UV);\" on line 98.
+uniform bool overlay = false;
+
+uniform float scanlines_opacity : hint_range(0.0, 1.0) = 0.4;
+uniform float scanlines_width : hint_range(0.0, 0.5) = 0.25;
+uniform float grille_opacity : hint_range(0.0, 1.0) = 0.3;
+uniform vec2 resolution = vec2(640.0, 480.0); // Set the number of rows and columns the texture will be divided in. Scanlines and grille will make a square based on these values
+
+uniform bool pixelate = true; // Fill each square (\"pixel\") with a sampled color, creating a pixel look and a more accurate representation of how a CRT monitor would work.
+
+uniform bool roll = true;
+uniform float roll_speed = 8.0; // Positive values are down, negative are up
+uniform float roll_size : hint_range(0.0, 100.0) = 15.0;
+uniform float roll_variation : hint_range(0.1, 5.0) = 1.8; // This valie is not an exact science. You have to play around with the value to find a look you like. How this works is explained in the code below.
+uniform float distort_intensity : hint_range(0.0, 0.2) = 0.05; // The distortion created by the rolling effect.
+
+uniform float noise_opacity : hint_range(0.0, 1.0) = 0.4;
+uniform float noise_speed = 5.0; // There is a movement in the noise pattern that can be hard to see first. This sets the speed of that movement.
+
+uniform float static_noise_intensity : hint_range(0.0, 1.0) = 0.06;
+
+uniform float aberration : hint_range(-1.0, 1.0) = 0.03; // Chromatic aberration, a distortion on each color channel.
+uniform float brightness = 1.4; // When adding scanline gaps and grille the image can get very dark. Brightness tries to compensate for that.
+uniform bool discolor = true; // Add a discolor effect simulating a VHS
+
+uniform float warp_amount :hint_range(0.0, 5.0) = 1.0; // Warp the texture edges simulating the curved glass of a CRT monitor or old TV.
+uniform bool clip_warp = false;
+
+uniform float vignette_intensity = 0.4; // Size of the vignette, how far towards the middle it should go.
+uniform float vignette_opacity : hint_range(0.0, 1.0) = 0.5;
+
+// Used by the noise functin to generate a pseudo random value between 0.0 and 1.0
+vec2 random(vec2 uv){
+    uv = vec2( dot(uv, vec2(127.1,311.7) ),
+               dot(uv, vec2(269.5,183.3) ) );
+    return -1.0 + 2.0 * fract(sin(uv) * 43758.5453123);
+}
+
+// Generate a Perlin noise used by the distortion effects
+float noise(vec2 uv) {
+    vec2 uv_index = floor(uv);
+    vec2 uv_fract = fract(uv);
+
+    vec2 blur = smoothstep(0.0, 1.0, uv_fract);
+
+    return mix( mix( dot( random(uv_index + vec2(0.0,0.0) ), uv_fract - vec2(0.0,0.0) ),
+                     dot( random(uv_index + vec2(1.0,0.0) ), uv_fract - vec2(1.0,0.0) ), blur.x),
+                mix( dot( random(uv_index + vec2(0.0,1.0) ), uv_fract - vec2(0.0,1.0) ),
+                     dot( random(uv_index + vec2(1.0,1.0) ), uv_fract - vec2(1.0,1.0) ), blur.x), blur.y) * 0.5 + 0.5;
+}
+
+// Takes in the UV and warps the edges, creating the spherized effect
+vec2 warp(vec2 uv){
+	vec2 delta = uv - 0.5;
+	float delta2 = dot(delta.xy, delta.xy);
+	float delta4 = delta2 * delta2;
+	float delta_offset = delta4 * warp_amount;
+	
+	return uv + delta * delta_offset;
+}
+
+// Adds a black border to hide stretched pixel created by the warp effect
+float border (vec2 uv){
+	float radius = min(warp_amount, 0.08);
+	radius = max(min(min(abs(radius * 2.0), abs(1.0)), abs(1.0)), 1e-5);
+	vec2 abs_uv = abs(uv * 2.0 - 1.0) - vec2(1.0, 1.0) + radius;
+	float dist = length(max(vec2(0.0), abs_uv)) / radius;
+	float square = smoothstep(0.96, 1.0, dist);
+	return clamp(1.0 - square, 0.0, 1.0);
+}
+
+// Adds a vignette shadow to the edges of the image
+float vignette(vec2 uv){
+	uv *= 1.0 - uv.xy;
+	float vignette = uv.x * uv.y * 15.0;
+	return pow(vignette, vignette_intensity * vignette_opacity);
+}
+
+void fragment()
+{
+	vec2 uv = overlay ? warp(SCREEN_UV) : warp(UV); // Warp the uv. uv will be used in most cases instead of UV to keep the warping
+	vec2 text_uv = uv;
+	vec2 roll_uv = vec2(0.0);
+	float time = roll ? TIME : 0.0;
+	
+
+	// Pixelate the texture based on the given resolution.
+	if (pixelate)
+	{
+		text_uv = ceil(uv * resolution) / resolution;
+	}
+	
+	// Create the rolling effect. We need roll_line a bit later to make the noise effect.
+	// That is why this runs if roll is true OR noise_opacity is over 0.
+	float roll_line = 0.0;
+	if (roll || noise_opacity > 0.0)
+	{
+		// Create the areas/lines where the texture will be distorted.
+		roll_line = smoothstep(0.3, 0.9, sin(uv.y * roll_size - (time * roll_speed) ) );
+		// Create more lines of a different size and apply to the first set of lines. This creates a bit of variation.
+		roll_line *= roll_line * smoothstep(0.3, 0.9, sin(uv.y * roll_size * roll_variation - (time * roll_speed * roll_variation) ) );
+		// Distort the UV where where the lines are
+		roll_uv = vec2(( roll_line * distort_intensity * (1.-UV.x)), 0.0);
+	}
+	
+	vec4 text;
+	if (roll)
+	{
+		// If roll is true distort the texture with roll_uv. The texture is split up into RGB to 
+		// make some chromatic aberration. We apply the aberration to the red and green channels accorging to the aberration parameter
+		// and intensify it a bit in the roll distortion.
+		text.r = texture(SCREEN_TEXTURE, text_uv + roll_uv * 0.8 + vec2(aberration, 0.0) * .1).r;
+		text.g = texture(SCREEN_TEXTURE, text_uv + roll_uv * 1.2 - vec2(aberration, 0.0) * .1 ).g;
+		text.b = texture(SCREEN_TEXTURE, text_uv + roll_uv).b;
+		text.a = 1.0;
+	}
+	else
+	{
+		// If roll is false only apply the aberration without any distorion. The aberration values are very small so the .1 is only 
+		// to make the slider in the Inspector less sensitive.
+		text.r = texture(SCREEN_TEXTURE, text_uv + vec2(aberration, 0.0) * .1).r;
+		text.g = texture(SCREEN_TEXTURE, text_uv - vec2(aberration, 0.0) * .1).g;
+		text.b = texture(SCREEN_TEXTURE, text_uv).b;
+		text.a = 1.0;
+	}
+	
+	float r = text.r;
+	float g = text.g;
+	float b = text.b;
+	
+	uv = warp(UV);
+	
+	// CRT monitors don't have pixels but groups of red, green and blue dots or lines, called grille. We isolate the texture's color channels 
+	// and divide it up in 3 offsetted lines to show the red, green and blue colors next to each other, with a small black gap between.
+	if (grille_opacity > 0.0){
+		
+		float g_r = smoothstep(0.85, 0.95, abs(sin(uv.x * (resolution.x * 3.14159265))));
+		r = mix(r, r * g_r, grille_opacity);
+		
+		float g_g = smoothstep(0.85, 0.95, abs(sin(1.05 + uv.x * (resolution.x * 3.14159265))));
+		g = mix(g, g * g_g, grille_opacity);
+		
+		float b_b = smoothstep(0.85, 0.95, abs(sin(2.1 + uv.x * (resolution.x * 3.14159265))));
+		b = mix(b, b * b_b, grille_opacity);
+		
+	}
+	
+	// Apply the grille to the texture's color channels and apply Brightness. Since the grille and the scanlines (below) make the image very dark you
+	// can compensate by increasing the brightness.
+	text.r = clamp(r * brightness, 0.0, 1.0);
+	text.g = clamp(g * brightness, 0.0, 1.0);
+	text.b = clamp(b * brightness, 0.0, 1.0);
+	
+	// Scanlines are the horizontal lines that make up the image on a CRT monitor. 
+	// Here we are actual setting the black gap between each line, which I guess is not the right definition of the word, but you get the idea  
+	float scanlines = 0.5;
+	if (scanlines_opacity > 0.0)
+	{
+		// Same technique as above, create lines with sine and applying it to the texture. Smoothstep to allow setting the line size.
+		scanlines = smoothstep(scanlines_width, scanlines_width + 0.5, abs(sin(uv.y * (resolution.y * 3.14159265))));
+		text.rgb = mix(text.rgb, text.rgb * vec3(scanlines), scanlines_opacity);
+	}
+	
+	// Apply the banded noise.
+	if (noise_opacity > 0.0)
+	{
+		// Generate a noise pattern that is very stretched horizontally, and animate it with noise_speed
+		float noise = smoothstep(0.4, 0.5, noise(uv * vec2(2.0, 200.0) + vec2(10.0, (TIME * (noise_speed))) ) );
+		
+		// We use roll_line (set above) to define how big the noise should be vertically (multiplying cuts off all black parts).
+		// We also add in some basic noise with random() to break up the noise pattern above. The noise is sized according to 
+		// the resolution value set in the inspector. If you don't like this look you can 
+		// change \"ceil(uv * resolution) / resolution\" to only \"uv\" to make it less pixelated. Or multiply resolution with som value
+		// greater than 1.0 to make them smaller.
+		roll_line *= noise * scanlines * clamp(random((ceil(uv * resolution) / resolution) + vec2(TIME * 0.8, 0.0)).x + 0.8, 0.0, 1.0);
+		// Add it to the texture based on noise_opacity
+		text.rgb = clamp(mix(text.rgb, text.rgb + roll_line, noise_opacity), vec3(0.0), vec3(1.0));
+	}
+	
+	// Apply static noise by generating it over the whole screen in the same way as above
+	if (static_noise_intensity > 0.0)
+	{
+		text.rgb += clamp(random((ceil(uv * resolution) / resolution) + fract(TIME)).x, 0.0, 1.0) * static_noise_intensity;
+	}
+	
+	// Apply a black border to hide imperfections caused by the warping.
+	// Also apply the vignette
+	text.rgb *= border(uv);
+	text.rgb *= vignette(uv);
+	// Hides the black border and make that area transparent. Good if you want to add the the texture on top an image of a TV or monitor.
+	if (clip_warp)
+	{
+		text.a = border(uv);
+	}
+	
+	// Apply discoloration to get a VHS look (lower saturation and higher contrast)
+	// You can play with the values below or expose them in the Inspector.
+	float saturation = 0.5;
+	float contrast = 1.2;
+	if (discolor)
+	{
+		// Saturation
+		vec3 greyscale = vec3(text.r + text.g + text.b) / 3.;
+		text.rgb = mix(text.rgb, greyscale, saturation);
+		
+		// Contrast
+		float midpoint = pow(0.5, 2.2);
+		text.rgb = (text.rgb - vec3(midpoint)) * contrast + midpoint;
+	}
+	
+	COLOR = text;
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ysp8t"]
+shader = SubResource("Shader_6xlih")
+shader_parameter/overlay = false
+shader_parameter/scanlines_opacity = 0.074000003515
+shader_parameter/scanlines_width = 0.0
+shader_parameter/grille_opacity = 0.09200000437
+shader_parameter/resolution = Vector2(1280, 720)
+shader_parameter/pixelate = false
+shader_parameter/roll = false
+shader_parameter/roll_speed = 8.0
+shader_parameter/roll_size = 0.0
+shader_parameter/roll_variation = 1.8
+shader_parameter/distort_intensity = 0.05
+shader_parameter/noise_opacity = 0.4
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.010000000475
+shader_parameter/aberration = 0.00500004773750006
+shader_parameter/brightness = 1.4
+shader_parameter/discolor = false
+shader_parameter/warp_amount = 0.3150000149625
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.3
+shader_parameter/vignette_opacity = 0.474000022515
 
 [node name="Game" type="Node3D" unique_id=1361872469]
 script = ExtResource("1_8nvx8")
@@ -95,7 +359,7 @@ script = ExtResource("10_3lxql")
 
 [node name="Board" type="MeshInstance3D" parent="Environment" unique_id=1852065267]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15097189, 0)
-material_override = SubResource("StandardMaterial3D_kwtg8")
+material_override = SubResource("ShaderMaterial_yv0cm")
 mesh = SubResource("BoxMesh_kwtg8")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=1723087591]
@@ -111,12 +375,6 @@ debug_color = Color(0.98805624, 0, 0.31137228, 0.41960785)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=116492737]
 transform = Transform3D(0.15203945, 0.5280302, 0.8355047, -0.29318842, -0.78318954, 0.54831994, 0.943888, -0.32832658, 0.03573664, 89.6891, 6.098528, 0)
-shadow_enabled = true
-
-[node name="ReflectionProbe" type="ReflectionProbe" parent="Environment" unique_id=1036095399]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4750366, 0)
-size = Vector3(20, 5.5809326, 20)
-interior = true
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1600656523 node_paths=PackedStringArray("CardPanel")]
 script = ExtResource("15_xug3m")
@@ -135,6 +393,7 @@ anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
+theme = ExtResource("16_sdi6l")
 theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/CardPanel" unique_id=162409822]
@@ -174,6 +433,7 @@ offset_left = 29.0
 offset_top = 182.0
 offset_right = -940.0
 offset_bottom = -199.0
+theme = ExtResource("16_sdi6l")
 theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="PlayerPanels" type="MarginContainer" parent="UI" unique_id=701558278]
@@ -186,9 +446,11 @@ offset_right = -24.0
 offset_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("16_ysp8t")
 
 [node name="PanelList" type="HBoxContainer" parent="UI/PlayerPanels" unique_id=577469550]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="ActionBar" type="MarginContainer" parent="UI" unique_id=852446653]
 anchors_preset = 10
@@ -214,6 +476,7 @@ offset_bottom = 128.5
 grow_horizontal = 0
 grow_vertical = 2
 size_flags_horizontal = 8
+theme = ExtResource("16_sdi6l")
 theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="Title" type="Label" parent="UI/PropertyDetailPanel" unique_id=1902027091]
@@ -223,12 +486,14 @@ offset_right = 167.0
 offset_bottom = 46.0
 theme = SubResource("Theme_021v2")
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="Owner" type="Label" parent="UI/PropertyDetailPanel" unique_id=1962449548]
 layout_mode = 0
-offset_top = 33.0
-offset_right = 167.0
-offset_bottom = 63.0
+offset_left = -1.0
+offset_top = 54.5
+offset_right = 166.0
+offset_bottom = 84.5
 horizontal_alignment = 1
 autowrap_mode = 2
 
@@ -257,6 +522,7 @@ offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 3
+theme = ExtResource("16_sdi6l")
 theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="Instructions" type="Label" parent="UI/VictimPanel" unique_id=1118560122]
@@ -292,6 +558,7 @@ offset_right = 200.0
 offset_bottom = 66.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("16_sdi6l")
 theme_override_styles/panel = ExtResource("25_x7q1m")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/TradePanel" unique_id=1738274468]
@@ -399,6 +666,7 @@ offset_right = 20.0
 offset_bottom = 40.0
 grow_horizontal = 2
 size_flags_horizontal = 4
+theme = SubResource("Theme_sdi6l")
 
 [node name="Name" type="Label" parent="UI/TurnDisplay" unique_id=1841935087]
 layout_mode = 1
@@ -412,7 +680,6 @@ vertical_alignment = 1
 
 [node name="PauseMenu" type="Control" parent="UI" unique_id=28996167]
 process_mode = 3
-visible = false
 custom_minimum_size = Vector2(150, 200)
 layout_mode = 3
 anchors_preset = 8
@@ -423,8 +690,10 @@ anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 4
+theme = SubResource("Theme_yv0cm")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/PauseMenu" unique_id=1870857267]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -434,29 +703,31 @@ grow_vertical = 2
 alignment = 1
 
 [node name="Resume" type="Button" parent="UI/PauseMenu/VBoxContainer" unique_id=560808145]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(200, 100)
 layout_mode = 2
 text = "Resume"
 
 [node name="Quit" type="Button" parent="UI/PauseMenu/VBoxContainer" unique_id=1294521062]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(200, 100)
 layout_mode = 2
 text = "Quit"
 
 [node name="PauseButton" type="Button" parent="UI" unique_id=203390594]
 custom_minimum_size = Vector2(50, 50)
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 52.0
-offset_bottom = 52.0
+offset_left = 37.0
+offset_top = 36.0
+offset_right = 87.0
+offset_bottom = 86.0
+theme = ExtResource("16_ysp8t")
 text = "| |"
 
 [node name="SpeedUp" type="Button" parent="UI" unique_id=801177699]
 custom_minimum_size = Vector2(50, 50)
-offset_left = 54.0
-offset_top = 2.0
-offset_right = 104.0
-offset_bottom = 52.0
+offset_left = 89.0
+offset_top = 36.0
+offset_right = 139.0
+offset_bottom = 86.0
+theme = ExtResource("16_ysp8t")
 text = "x1"
 
 [node name="CameraRIG" type="Node3D" parent="." unique_id=429319313]
@@ -470,5 +741,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55025, 0)
 [node name="PlayerAnchor" type="Node3D" parent="CameraRIG" unique_id=470789046]
 
 [node name="FreeAnchor" type="Node3D" parent="CameraRIG" unique_id=1018399853]
+
+[node name="PostProcessing" type="CanvasLayer" parent="." unique_id=1083618873]
+
+[node name="MonitorLines" type="ColorRect" parent="PostProcessing" unique_id=1609872074]
+material = SubResource("ShaderMaterial_ysp8t")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
 
 [connection signal="pressed" from="UI/CardPanel/VBoxContainer/AcceptButton" to="UI" method="_on_accept_button_pressed"]

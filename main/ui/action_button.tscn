@@ -1,10 +1,6 @@
 [gd_scene format=3 uid="uid://bwfrpoqso0ifx"]
 
-[sub_resource type="Theme" id="Theme_upmhn"]
-default_font_size = 14
-
-[sub_resource type="Theme" id="Theme_rjqtm"]
-default_font_size = 10
+[ext_resource type="Theme" uid="uid://f3fgt40yf6sv" path="res://materials/themes/main_game_theme.tres" id="1_g77ni"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_upmhn"]
 bg_color = Color(0.1288298, 0.1288298, 0.12882972, 1)
@@ -14,10 +10,10 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [node name="Button" type="Button" unique_id=1467543900]
-custom_minimum_size = Vector2(100, 35)
+custom_minimum_size = Vector2(130, 45)
 offset_right = 8.0
 offset_bottom = 8.0
-theme = SubResource("Theme_upmhn")
+theme = ExtResource("1_g77ni")
 text = "Boo"
 autowrap_mode = 2
 
@@ -30,7 +26,7 @@ anchor_right = 1.065
 anchor_bottom = 0.3
 offset_left = -1.5258789e-05
 offset_right = -1.5258789e-05
-theme = SubResource("Theme_rjqtm")
+theme_override_font_sizes/font_size = 15
 text = "space"
 horizontal_alignment = 1
 vertical_alignment = 1

@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bwpbbu28naodh" path="res://main/board_items/dice.gd" id="1_vmqw7"]
 [ext_resource type="AudioStream" uid="uid://dx4no5b0p50t0" path="res://assets/sounds/click_x.wav" id="2_ihq8s"]
 [ext_resource type="ArrayMesh" uid="uid://brj7qamkb6e32" path="res://assets/dice/dice.obj" id="2_y438w"]
-[ext_resource type="Texture2D" uid="uid://dajsgm2vmbb0i" path="res://materials/Textures/Brick.jpg" id="3_2me5a"]
+[ext_resource type="Material" uid="uid://0cqn7ifk1krc" path="res://materials/Tile/Tile.tres" id="4_ihq8s"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_vmqw7"]
 friction = 1.2
@@ -11,17 +11,10 @@ bounce = 0.15
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4ea2f"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xqd7s"]
-albedo_color = Color(0, 0, 0, 1)
-roughness = 0.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ea2f"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bf7yy"]
 diffuse_mode = 1
-albedo_color = Color(0.8894838, 0.8862409, 0.8818242, 1)
 metallic = 1.0
-roughness_texture = ExtResource("3_2me5a")
-roughness_texture_channel = 4
-uv1_scale = Vector3(10, 10, 10)
+roughness = 0.45
 
 [node name="Dice" type="RigidBody3D" unique_id=1688145858]
 physics_material_override = SubResource("PhysicsMaterial_vmqw7")
@@ -39,8 +32,8 @@ shape = SubResource("BoxShape3D_4ea2f")
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=715361706]
 mesh = ExtResource("2_y438w")
-surface_material_override/0 = SubResource("StandardMaterial3D_xqd7s")
-surface_material_override/1 = SubResource("StandardMaterial3D_4ea2f")
+surface_material_override/0 = ExtResource("4_ihq8s")
+surface_material_override/1 = SubResource("StandardMaterial3D_bf7yy")
 
 [node name="AudioPlayer" type="AudioStreamPlayer3D" parent="." unique_id=1019261527]
 max_polyphony = 8
