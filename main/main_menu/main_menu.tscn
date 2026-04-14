@@ -7,6 +7,7 @@
 [ext_resource type="FontFile" uid="uid://bccn73tokjobo" path="res://materials/Font/default.ttf" id="4_6fq81"]
 [ext_resource type="Theme" uid="uid://cdl14ulkv4bkx" path="res://materials/themes/button_theme.tres" id="5_mrrnu"]
 [ext_resource type="Script" uid="uid://cpfmmhw2g4txw" path="res://main/main_menu/play_btn.gd" id="5_ypvuc"]
+[ext_resource type="AudioStream" uid="uid://cfvveit6ce8ts" path="res://assets/sounds/financial_breakdown.wav" id="8_ksu4j"]
 
 [sub_resource type="Environment" id="Environment_j30hl"]
 background_mode = 3
@@ -122,7 +123,7 @@ shader_parameter/distort_intensity = 0.010000000475
 shader_parameter/noise_opacity = 0.0670000031825
 shader_parameter/noise_speed = 1.0
 shader_parameter/static_noise_intensity = 0.02000000095
-shader_parameter/aberration = 0.010000047974999982
+shader_parameter/aberration = 0.01000004797499998
 shader_parameter/brightness = 1.0
 shader_parameter/discolor = true
 shader_parameter/warp_amount = 0.3450000163875
@@ -187,15 +188,16 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 134.44446
-offset_top = 237.77783
-offset_right = 857.44446
-offset_bottom = 393.27783
+offset_left = -60.0
+offset_top = 237.77777
+offset_right = 663.0
+offset_bottom = 393.27777
 grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_ksu4j")
-text = "v0.1"
-horizontal_alignment = 1
+text = "v0.1
+Made with Godot"
+horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="Time" type="Label" parent="UILayer/MainPanel" unique_id=215882057]
@@ -232,7 +234,6 @@ grow_vertical = 2
 size_flags_vertical = 3
 theme = ExtResource("5_mrrnu")
 theme_type_variation = &"FlatButton"
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 0.5647059, 0.12156863, 1)
 text = "Click Here To Start A Game"
 script = ExtResource("5_ypvuc")
@@ -244,10 +245,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 321.0
-offset_top = 238.0
-offset_right = 604.0
-offset_bottom = 292.0
+offset_left = -605.55554
+offset_top = 237.77777
+offset_right = -322.55554
+offset_bottom = 291.77777
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 3
@@ -263,16 +264,16 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -628.0
-offset_top = 239.0
-offset_right = -345.0
-offset_bottom = 293.0
+offset_left = -640.0
+offset_top = 292.22223
+offset_right = -357.0001
+offset_bottom = 346.22223
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 3
 theme = ExtResource("5_mrrnu")
 theme_type_variation = &"FlatButton"
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.875, 0.875, 0.875, 1)
 text = "Quit"
 
 [node name="SettingsPanel" type="PanelContainer" parent="UILayer" unique_id=465760267]
@@ -292,7 +293,7 @@ alignment = 1
 
 [node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox" unique_id=1993788988]
 layout_mode = 2
-text = "Settings (PC only)"
+text = "Settings"
 horizontal_alignment = 1
 
 [node name="Display" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=1264725577]
@@ -324,14 +325,13 @@ custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
 [node name="Volume" type="HBoxContainer" parent="UILayer/SettingsPanel/VBox" unique_id=1889538040]
-visible = false
 layout_mode = 2
 theme_override_constants/separation = 410
 alignment = 1
 
 [node name="Label" type="Label" parent="UILayer/SettingsPanel/VBox/Volume" unique_id=1475592066]
 layout_mode = 2
-text = "SFX"
+text = "Volume"
 horizontal_alignment = 1
 
 [node name="MasterVolume" type="HSlider" parent="UILayer/SettingsPanel/VBox/Volume" unique_id=458405303]
@@ -432,3 +432,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="MenuMusic" type="AudioStreamPlayer2D" parent="." unique_id=1803592346]
+stream = ExtResource("8_ksu4j")
+autoplay = true

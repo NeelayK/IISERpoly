@@ -6,6 +6,8 @@ extends Node
 @onready var play_setup_panel = $UILayer/PlaySetupPanel
 @onready var player_list = $UILayer/PlaySetupPanel/VBox/PlayerList
 @onready var camera = $Camera3D
+@onready var music_player = $MenuMusic
+@onready var volume_bar = $UILayer/SettingsPanel/VBox/Volume/MasterVolume
 
 var player_row_scene = preload("res://main/main_menu/player_setup_row.tscn")
 var pending_settings = {"mode": DisplayServer.WINDOW_MODE_WINDOWED, "res": Vector2i(1280, 720)}
@@ -15,8 +17,8 @@ func _ready():
 		var d = Time.get_date_dict_from_system()
 
 		$UILayer/MainPanel/Time.text = "Credits: 0%02d" % [d.day]
-		if not OS.has_feature("mobile"):
-			settings_button.disabled = true
+		if OS.has_feature("mobile"):
+			settings_button.visible = false
 		main_panel.get_node("PlayBtn").pressed.connect(func(): _show_panel(play_setup_panel))
 		main_panel.get_node("SettingsBtn").pressed.connect(func(): _show_panel(settings_panel))
 		main_panel.get_node("QuitBtn").pressed.connect(func(): get_tree().quit())
@@ -40,6 +42,10 @@ func _ready():
 		
 		_add_player_row()
 		_add_player_row()
+		if not music_player.playing:
+			music_player.play()
+		_initialize_volume_settings()
+		volume_bar.value_changed.connect(_on_volume_changed)
 		return
 
 func _process(delta):
@@ -207,3 +213,19 @@ func _rem_player_row():
 
 func _go_to_game_scene():
 	get_tree().change_scene_to_file("res://main/board_items/game.tscn")
+
+
+func _initialize_volume_settings():
+	var bus_index = AudioServer.get_bus_index("Master")
+	var current_db = AudioServer.get_bus_volume_db(bus_index)
+	
+	volume_bar.min_value = 0.0
+	volume_bar.max_value = 1.0
+	volume_bar.step = 0.01
+	volume_bar.value = db_to_linear(current_db)
+
+func _on_volume_changed(value: float):
+	var bus_index = AudioServer.get_bus_index("Master")
+	AudioServer.set_bus_volume_db(bus_index, linear_to_db(value))
+	
+	AudioServer.set_bus_mute(bus_index, value <= 0.0)

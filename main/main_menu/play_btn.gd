@@ -1,6 +1,12 @@
 extends Button
 
+@export var color1 = Color("d39f00ff")
+@export var color2 = Color.WHITE
+
 func _ready() -> void:
+	var i := true
+	
 	while true:
-		await get_tree().create_timer(1.0 if modulate.a==1.0 else 0.75).timeout
-		modulate.a = 1.0 if modulate.a<=0.5 else 0.4
+		await get_tree().create_timer(0.75 if i else 1.0).timeout
+		add_theme_color_override("font_color",color2 if i else color1)
+		i = !i
