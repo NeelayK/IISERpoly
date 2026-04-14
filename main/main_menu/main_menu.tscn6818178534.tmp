@@ -131,6 +131,13 @@ shader_parameter/clip_warp = false
 shader_parameter/vignette_intensity = 0.4
 shader_parameter/vignette_opacity = 0.3450000163875
 
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ksu4j"]
+particle_flag_disable_z = true
+inherit_velocity_ratio = 200.0
+gravity = Vector3(0, 0, 0)
+hue_variation_min = -1.0
+hue_variation_max = 0.99999994
+
 [node name="MainMenu" type="Node2D" unique_id=1471649901]
 script = ExtResource("1_q6wqb")
 
@@ -237,7 +244,7 @@ theme_type_variation = &"FlatButton"
 text = "Click Here To Start A Game"
 script = ExtResource("5_ypvuc")
 
-[node name="SettingsBtn" type="Button" parent="UILayer/MainPanel" unique_id=17028394 groups=["Explode", "JuicyButtons"]]
+[node name="SettingsBtn" type="Button" parent="UILayer/MainPanel" unique_id=17028394]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -256,7 +263,7 @@ theme_type_variation = &"FlatButton"
 theme_override_colors/font_color = Color(0.875, 0.875, 0.875, 1)
 text = "Settings"
 
-[node name="QuitBtn" type="Button" parent="UILayer/MainPanel" unique_id=1524428485 groups=["Explode", "JuicyButtons"]]
+[node name="QuitBtn" type="Button" parent="UILayer/MainPanel" unique_id=1524428485]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -344,13 +351,13 @@ size_flags_horizontal = 4
 theme = ExtResource("5_mrrnu")
 alignment = 1
 
-[node name="ApplyBtn" type="Button" parent="UILayer/SettingsPanel/VBox/HBox" unique_id=1845486433 groups=["Explode", "JuicyButtons"]]
+[node name="ApplyBtn" type="Button" parent="UILayer/SettingsPanel/VBox/HBox" unique_id=1845486433]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Apply"
 
-[node name="BackBtn" type="Button" parent="UILayer/SettingsPanel/VBox/HBox" unique_id=477837169 groups=["Explode", "JuicyButtons"]]
+[node name="BackBtn" type="Button" parent="UILayer/SettingsPanel/VBox/HBox" unique_id=477837169]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -404,13 +411,13 @@ layout_mode = 2
 size_flags_horizontal = 4
 alignment = 1
 
-[node name="StartGameBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox" unique_id=1413053142 groups=["Explode", "JuicyButtons"]]
+[node name="StartGameBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox" unique_id=1413053142]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "Start"
 
-[node name="BackBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox" unique_id=350346956 groups=["Explode", "JuicyButtons"]]
+[node name="BackBtn" type="Button" parent="UILayer/PlaySetupPanel/VBox/HBox" unique_id=350346956]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -437,5 +444,10 @@ metadata/_edit_use_anchors_ = true
 stream = ExtResource("8_ksu4j")
 autoplay = true
 
+[node name="ExplosionParticles" type="GPUParticles2D" parent="." unique_id=2137952311]
+emitting = false
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_ksu4j")
+
 [node name="SFXPlayer" type="AudioStreamPlayer2D" parent="." unique_id=1744420113]
-position = Vector2(691, 357)

@@ -1,6 +1,6 @@
 extends Button
 
-@export var color1 = Color("d39f00ff")
+@export var color1 = Color("00bbdfff")
 @export var color2 = Color.WHITE
 
 func _ready() -> void:
