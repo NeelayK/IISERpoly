@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://bxrvt0dscy1tq"]
+
+[ext_resource type="Script" uid="uid://cximf78k3tvnb" path="res://main/main_menu/loading.gd" id="1_46dr4"]
+[ext_resource type="Texture2D" uid="uid://b7wsva2vijy2q" path="res://assets/splash/logo.png" id="2_el1yf"]
+[ext_resource type="Theme" uid="uid://cx6f3r151epnl" path="res://materials/themes/font_theme.tres" id="3_2in2n"]
+[ext_resource type="Shader" uid="uid://dy5bpmkbacp4e" path="res://main/main_menu/main_menu.gdshader" id="4_a43gj"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_o5ugi"]
+shader = ExtResource("4_a43gj")
+shader_parameter/overlay = false
+shader_parameter/scanlines_opacity = 0.262000012445
+shader_parameter/scanlines_width = 0.25
+shader_parameter/grille_opacity = 0.2830000134425
+shader_parameter/resolution = Vector2(640, 240)
+shader_parameter/pixelate = false
+shader_parameter/roll = true
+shader_parameter/roll_speed = 1.5
+shader_parameter/roll_size = 15.0
+shader_parameter/roll_variation = 1.8
+shader_parameter/distort_intensity = 0.010000000475
+shader_parameter/noise_opacity = 0.0670000031825
+shader_parameter/noise_speed = 1.0
+shader_parameter/static_noise_intensity = 0.02000000095
+shader_parameter/aberration = 0.01000004797499998
+shader_parameter/brightness = 1.0
+shader_parameter/discolor = true
+shader_parameter/warp_amount = 0.3450000163875
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.3450000163875
+
+[node name="LoadingScreen" type="CanvasLayer" unique_id=1148663863]
+script = ExtResource("1_46dr4")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=121330546]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.021117322, 0.029600713, 0.050812095, 1)
+
+[node name="Logo" type="TextureRect" parent="." unique_id=856491305]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -128.0
+offset_top = -146.0
+offset_right = 385.0
+offset_bottom = 367.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_el1yf")
+stretch_mode = 4
+
+[node name="ProgressBar" type="ProgressBar" parent="." unique_id=849207135]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -128.0
+offset_top = 85.0
+offset_right = 152.0
+offset_bottom = 135.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3_2in2n")
+theme_override_font_sizes/font_size = 60
+
+[node name="MonitorLines" type="ColorRect" parent="." unique_id=938780980]
+material = SubResource("ShaderMaterial_o5ugi")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true

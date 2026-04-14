@@ -275,7 +275,7 @@ func _start_game():
 
 
 func _go_to_game_scene():
-	get_tree().change_scene_to_file("res://main/board_items/game.tscn")
+	get_tree().change_scene_to_file("res://main/main_menu/loading.tscn")
 
 
 # ── Audio ─────────────────────────────────────────────────────────────────────
